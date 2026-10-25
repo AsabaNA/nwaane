@@ -1,0 +1,20 @@
+// Invoice and receipt PDFs (owners and the school itself download the same documents)
+const {PDFDocument,pipe}=require('./core/pdfkit'),{db}=require('./db'),B=require('./billing');
+const NAME=process.env.BILLING_NAME||'School Platform',PAY=process.env.PAY_TEXT||'Pay by mobile money or bank transfer and send us the reference.';
+const f=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' FCFA',LB={reports:'Report cards',fees:'Fees',tracking:'Teacher tracking',min:'Minimum per term',commit:'Registration fee (schools joining after Term 1)'};
+function head(doc,title,no){doc.font('Helvetica-Bold').fontSize(18).fillColor('#0a0c12').text(NAME,50,50);doc.fontSize(22).fillColor('#455aff').text(title,50,50,{align:'right',width:495});doc.font('Helvetica').fontSize(10).fillColor('#555').text(no,50,78,{align:'right',width:495});doc.moveTo(50,105).lineTo(545,105).strokeColor('#ccc').stroke();doc.fillColor('#000')}
+function invoice(res,id){const i=db.prepare("SELECT * FROM invoices WHERE id=? AND status!='draft'").get(id);if(!i)return false;const s=db.prepare('SELECT * FROM schools WHERE id=?').get(i.school_id),pr=db.prepare("SELECT name,phone FROM users WHERE school_id=? AND role='principal' ORDER BY id LIMIT 1").get(i.school_id)||{},L=JSON.parse(i.lines||'[]');
+ res.setHeader('Content-Type','application/pdf');res.setHeader('Content-Disposition',`attachment; filename="${i.number}.pdf"`);const doc=new PDFDocument({size:'A4',margin:50});pipe(doc,res);head(doc,'INVOICE',i.number);
+ doc.fontSize(10).font('Helvetica-Bold').text('Billed to',50,125).font('Helvetica').text(s.name).text(`School code ${s.code}`).text(pr.name||'');
+ doc.font('Helvetica-Bold').text('Details',350,125).font('Helvetica').text((i.term?`Term ${i.term}, ${i.year}/${i.year+1}`:'Registration fee'),350).text(`Issued ${i.issued}`,350).text(`Due ${i.due}`,350);
+ let y=210;doc.rect(50,y,495,22).fill('#eef0ff').fillColor('#000').font('Helvetica-Bold').text('Item',58,y+6).text('Quantity',280,y+6,{width:70,align:'right'}).text('Unit',355,y+6,{width:70,align:'right'}).text('Amount',445,y+6,{width:92,align:'right'});y+=30;doc.font('Helvetica');
+ for(const l of L){doc.text(LB[l.k]||l.k,58,y).text(l.k=='min'?'':String(l.qty),280,y,{width:70,align:'right'}).text(l.k=='min'?'':f(l.unit),355,y,{width:70,align:'right'}).text(f(l.amount),445,y,{width:92,align:'right'});y+=20}
+ if(i.discount){doc.text('Discount',58,y).text('- '+f(i.discount),445,y,{width:92,align:'right'});y+=20}
+ doc.moveTo(50,y).lineTo(545,y).strokeColor('#ccc').stroke();y+=10;doc.font('Helvetica-Bold').fontSize(12).text('Total',58,y).text(f(i.amount),445,y,{width:92,align:'right'});y+=24;
+ const paid=B.paidOf(i.id);doc.fontSize(10).font('Helvetica').text(`Paid ${f(paid)}`,350,y,{width:187,align:'right'});y+=16;doc.font('Helvetica-Bold').text(`Balance ${f(B.owing(i))}`,350,y,{width:187,align:'right'});
+ doc.font('Helvetica').fontSize(9).fillColor('#555').text(i.term?`Peak usage this term: ${i.students} students, ${i.teachers} teachers with lessons.`:"Non-refundable. Your free period still applies.",50,y+50).text(PAY,50,y+66,{width:495});doc.end();return true}
+function receipt(res,pid){const p=db.prepare('SELECT * FROM bill_payments WHERE id=?').get(pid);if(!p)return false;const i=db.prepare('SELECT * FROM invoices WHERE id=?').get(p.invoice_id),s=db.prepare('SELECT * FROM schools WHERE id=?').get(p.school_id);
+ res.setHeader('Content-Type','application/pdf');res.setHeader('Content-Disposition',`attachment; filename="${p.receipt}.pdf"`);const doc=new PDFDocument({size:'A4',margin:50});pipe(doc,res);head(doc,'RECEIPT',p.receipt);
+ doc.fontSize(11).font('Helvetica').text(`Received from ${s.name} (${s.code})`,50,130).text(`Amount: ${f(p.amount)}`,50,155).text(`Date: ${p.date}`,50,175).text(`Method: ${p.method||'—'}${p.ref?'   Reference: '+p.ref:''}`,50,195).text(`For invoice ${i.number}, term ${i.term}, ${i.year}/${i.year+1}`,50,215).text(`Invoice balance after this payment: ${f(Math.max(0,B.owing(i)))}`,50,235);
+ doc.fontSize(9).fillColor('#555').text(`Recorded by ${p.by_name||'—'}.`,50,280);doc.end();return true}
+module.exports={invoice,receipt};

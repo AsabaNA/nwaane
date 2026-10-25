@@ -1,0 +1,51 @@
+// Staff ID badges: photo + print from the Staff page and staff overlay, and a badge scanner on the Today (gate) screen. Loaded after ov2.js.
+Object.assign(D.en,{tb_btn:'Print ID badges',tb_h:'Print staff ID badges',tb_p:'Choose whose badge to print.',tb_all:'All staff',tb_nophoto:'no photo',tb_warn:'[n] staff have no photo yet ([x]…). Their badge will show an empty photo box.',tb_any:'Print anyway',tb_back:'Go back',tb_go:'Print',tb_cancel:'Cancel',tb_none:'Choose at least one person.',tb_ready:'File ready: [n] badges. It opened in a new tab.',tb_lay:'Layout',tb_l_sheet:'A4 sheets, 10 per page (double-sided)',tb_l_card:'One card per page (card printer)',tb_onlynew:'Only badges not printed yet',
+ tb_sec:'ID badge',tb_save:'Save photo',tb_saved:'Photo saved.',tb_one:'Print badge',tb_repl:'Replace lost badge',tb_replq:'This badge is lost or damaged. The old code will stop working. Reason (optional):',tb_repld:'New badge created. Print it.',tb_early:'left early',
+ tb_scan:'Scan badge',tb_scan_h:'Scan a staff badge',tb_scan_p:'Point the camera at the QR code on the badge.',tb_scan_no:'This browser cannot scan QR codes. Use your phone camera app: scanning the badge opens the page directly. Or type the code printed under the QR.',tb_code:'Badge code',tb_open:'Open',tb_scan_bad:'That is not a staff badge code.',tb_cam:'Could not open the camera.',
+ e_badge_empty:'No badges to print with these choices.'});
+Object.assign(D.fr,{tb_btn:'Imprimer les badges',tb_h:'Imprimer les badges du personnel',tb_p:'Choisissez les personnes dont imprimer le badge.',tb_all:'Tout le personnel',tb_nophoto:'sans photo',tb_warn:'[n] membres du personnel n’ont pas encore de photo ([x]…). Leur badge aura un cadre photo vide.',tb_any:'Imprimer quand même',tb_back:'Retour',tb_go:'Imprimer',tb_cancel:'Annuler',tb_none:'Choisissez au moins une personne.',tb_ready:'Fichier prêt : [n] badges. Il s’est ouvert dans un nouvel onglet.',tb_lay:'Disposition',tb_l_sheet:'Feuilles A4, 10 par page (recto verso)',tb_l_card:'Une carte par page (imprimante de cartes)',tb_onlynew:'Seulement les badges pas encore imprimés',
+ tb_sec:'Badge',tb_save:'Enregistrer la photo',tb_saved:'Photo enregistrée.',tb_one:'Imprimer le badge',tb_repl:'Remplacer un badge perdu',tb_replq:'Ce badge est perdu ou abîmé. L’ancien code cessera de fonctionner. Motif (facultatif) :',tb_repld:'Nouveau badge créé. Imprimez-le.',tb_early:'parti(e) tôt',
+ tb_scan:'Scanner un badge',tb_scan_h:'Scanner un badge du personnel',tb_scan_p:'Dirigez la caméra vers le code QR du badge.',tb_scan_no:'Ce navigateur ne sait pas scanner les codes QR. Utilisez l’appareil photo du téléphone : scanner le badge ouvre directement la page. Ou saisissez le code imprimé sous le QR.',tb_code:'Code du badge',tb_open:'Ouvrir',tb_scan_bad:'Ce n’est pas un code de badge du personnel.',tb_cam:'Impossible d’ouvrir la caméra.',
+ e_badge_empty:'Aucun badge à imprimer avec ces choix.'});
+const TB={sel:new Set(),all:true,layout:'sheet',onlyNew:false,d:null},tbF=(k,o)=>Object.entries(o||{}).reduce((s,[a,b])=>s.replace('['+a+']',b),t(k));
+// ---- Staff page: print button
+{const o=vStaff;vStaff=async function(m){await o(m);if(S.role!='principal')return;const tb=document.querySelector('#m .tb');if(tb&&!$('#tbbtn'))tb.querySelector('.sb').insertAdjacentHTML('afterend',`<button type=button class=sb id=tbbtn onclick="tbOpen()">${fi('qr',18)} ${t('tb_btn')}</button>`)}}
+async function tbOpen(id){const r=await api('staffbadges');if(!r.ok)return alert(em(r.s,r.d.error));TB.d=r.d;TB.all=!id;TB.sel=new Set(id?[+id]:[]);tbDraw()}
+function tbDraw(){const d=TB.d,all=TB.all,pick=d.staff.filter(u=>all||TB.sel.has(u.id)),np=pick.filter(u=>!u.photo).length;
+ const row=u=>`<label class="idr${all||TB.sel.has(u.id)?' on':''}"><input type=checkbox ${all||TB.sel.has(u.id)?'checked':''} onchange="tbTog(${u.id},this.checked)"><b>${esc(u.name)}</b><small>${t(u.role)}${u.photo?'':` · <i class=idw>${t('tb_nophoto')}</i>`}</small></label>`;
+ const h=`<div class=soh><div><h2>${t('tb_h')}</h2><small>${t('tb_p')} ${d.label}</small></div><button type=button class=ib onclick="ovClose()" aria-label="${t('tb_cancel')}">${fi('x',18)}</button></div>
+ <div class=idl><label class="idr${all?' on':''}"><input type=checkbox ${all?'checked':''} onchange="tbAll(this.checked)"><b>${t('tb_all')}</b><small>${d.staff.length}</small></label>${d.staff.map(row).join('')}</div>
+ <label for=tbly>${t('tb_lay')}</label><select id=tbly onchange="TB.layout=this.value"><option value=sheet ${TB.layout=='sheet'?'selected':''}>${t('tb_l_sheet')}<option value=card ${TB.layout=='card'?'selected':''}>${t('tb_l_card')}</select>
+ <label class=ck><input type=checkbox ${TB.onlyNew?'checked':''} onchange="TB.onlyNew=this.checked"> ${t('tb_onlynew')}</label>
+ <div id=tbw></div><p class=err id=tbE></p><div class=ov-a><button type=button class=sb onclick="ovClose()">${t('tb_cancel')}</button><button type=button id=tbgo onclick="tbGo()">${fi('print',18)} ${t('tb_go')}</button></div>`;
+ if($('.ovc')&&$('#tbgo')){$('.ovc').innerHTML=h}else ovOpen(h)}
+const tbAll=on=>{TB.all=on;TB.sel=new Set();tbDraw()},tbTog=(id,on)=>{if(TB.all){TB.all=false;TB.sel=new Set(TB.d.staff.map(u=>u.id))}on?TB.sel.add(id):TB.sel.delete(id);tbDraw()};
+async function tbGo(force){const pick=TB.d.staff.filter(u=>TB.all||TB.sel.has(u.id));if(!pick.length)return $('#tbE').textContent=t('tb_none');const miss=pick.filter(u=>!u.photo);
+ if(miss.length&&!force){$('#tbw').innerHTML=`<div class="box warn"><b>${tbF('tb_warn',{n:miss.length,x:esc(miss.slice(0,3).map(u=>u.name).join(', '))})}</b><div class=ov-a><button type=button class=sb onclick="$('#tbw').innerHTML=''">${t('tb_back')}</button><button type=button onclick="tbGo(1)">${t('tb_any')}</button></div></div>`;return}
+ $('#tbgo').disabled=true;const x=await fetch('/api/staffbadges/print',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({user_ids:TB.all?[]:pick.map(u=>u.id),layout:TB.layout,only_new:TB.onlyNew})});$('#tbgo').disabled=false;
+ if((x.headers.get('content-type')||'').includes('pdf')){const n=x.headers.get('x-badge-count');window.open(URL.createObjectURL(await x.blob()),'_blank');$('#tbw').innerHTML=`<p class="box ok">${tbF('tb_ready',{n})}</p>`;return}
+ const d=await x.json().catch(()=>({}));$('#tbE').textContent=em(x.status,d.error)}
+// ---- Staff overlay: photo and badge actions
+async function tbPhotoSave(id){const P=PH.tv;if(!P)return;let err=null;
+ if(P.rm&&!P.bm){const r=await api('staff/'+id+'/photo/delete',{});err=r.ok?null:r.d.error}
+ else if(P.bm&&P.dirty){const b=await phBlob('tv'),r=await fetch('/api/staff/'+id+'/photo',{method:'POST',headers:{'content-type':'application/octet-stream'},body:b});err=r.ok?null:(await r.json().catch(()=>({}))).error||'server'}
+ $('#tbm').className=err?'err':'ok';$('#tbm').textContent=err?em(400,err):t('tb_saved');if(!err){P.dirty=false;P.rm=false}}
+async function tbOne(id){const x=await fetch('/api/staffbadges/print',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({user_ids:[id],layout:'card'})});
+ if((x.headers.get('content-type')||'').includes('pdf'))return window.open(URL.createObjectURL(await x.blob()),'_blank');const d=await x.json().catch(()=>({}));alert(em(x.status,d.error))}
+async function tbRepl(id){const why=prompt(t('tb_replq'));if(why===null)return;const r=await api('staffbadges/replace',{user_id:id,reason:why});alert(r.ok?t('tb_repld'):em(r.s,r.d.error))}
+{const o=tvDraw;tvDraw=function(first){o(first);if(S.role!='principal'||TV.edit||!TV.u)return;const u=TV.u,c=$('.ovc');if(!c||c.querySelector('#tbsec'))return;
+  const ft=c.querySelector('.ovfoot');(ft?(h=>ft.insertAdjacentHTML('beforebegin',h)):(h=>c.insertAdjacentHTML('beforeend',h)))(`<div class=ovsec id=tbsec><div class=ovsh><h3>${t('tb_sec')}</h3></div>${phHtml('tv',u.has_photo?'/api/staff/'+u.id+'/photo':'')}<div class=ov-a><span id=tbm class=ok></span><button type=button class=sb onclick="tbPhotoSave(${u.id})">${t('tb_save')}</button><button type=button class=sb onclick="tbOne(${u.id})">${fi('print',16)} ${t('tb_one')}</button><button type=button class=sb onclick="tbRepl(${u.id})">${t('tb_repl')}</button></div></div>`);
+  phInit('tv')}}
+// ---- Today (gate) screen: scan a badge
+let TBS=null;
+{const o=vToday;vToday=async function(){await o();const h=document.querySelector('#m .ph');if(h&&!$('#tbscan')&&document.querySelector('#m .gr'))h.insertAdjacentHTML('beforeend',`<div class=noprint style="margin-top:10px"><button type=button class=sb id=tbscan onclick="tbScanOpen()">${fi('qr',18)} ${t('tb_scan')}</button></div>`)}}
+function tbCode(s){const m=String(s||'').toUpperCase().match(/TC-[A-Z0-9]{4}-[A-Z0-9]{4}/);return m?m[0]:''}
+function tbScanOpen(){const can='BarcodeDetector' in window&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia;
+ ovOpen(`<div class=soh><div><h2>${t('tb_scan_h')}</h2><small>${can?t('tb_scan_p'):t('tb_scan_no')}</small></div><button type=button class=ib onclick="tbScanStop();ovClose()" aria-label="${t('tb_cancel')}">${fi('x',18)}</button></div>
+ ${can?'<video id=tbv playsinline muted style="width:100%;border-radius:8px;background:#000;max-height:50vh"></video>':''}<label for=tbc>${t('tb_code')}</label><div style="display:flex;gap:8px"><input id=tbc placeholder="TC-XXXX-XXXX" autocapitalize=characters><button type=button onclick="tbCodeGo()">${t('tb_open')}</button></div><p class=err id=tbsE></p>`);
+ if(can)tbScanStart()}
+function tbCodeGo(){const c=tbCode($('#tbc').value);if(!c)return $('#tbsE').textContent=t('tb_scan_bad');tbScanStop();location.href='/t/'+c}
+async function tbScanStart(){try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}),v=$('#tbv');if(!v){st.getTracks().forEach(x=>x.stop());return}v.srcObject=st;await v.play();
+  const det=new BarcodeDetector({formats:['qr_code']});TBS={st,on:true};
+  const loop=async()=>{if(!TBS||!TBS.on)return;try{const r=await det.detect(v);for(const x of r){const c=tbCode(x.rawValue);if(c){tbScanStop();location.href='/t/'+c;return}}}catch{}setTimeout(loop,250)};loop()}catch{const e=$('#tbsE');if(e)e.textContent=t('tb_cam')}}
+function tbScanStop(){if(TBS){TBS.on=false;TBS.st.getTracks().forEach(x=>x.stop());TBS=null}}

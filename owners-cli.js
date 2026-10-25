@@ -1,0 +1,6 @@
+// Create or reset an owner account:  node owners-cli.js add you@example.com "Your Name" owner|finance|support
+//                                    node owners-cli.js reset you@example.com   (new password, two-step verification re-enrolled)
+const crypto=require('crypto'),{db,hash}=require('./db'),O=require('./owners'),[,,cmd,email,name,role]=process.argv,pw=()=>crypto.randomBytes(9).toString('base64url');
+if(cmd=='add'&&email&&name&&['owner','finance','support'].includes(role)){const p=pw();db.prepare('INSERT INTO owners(email,name,role,pw,totp) VALUES(?,?,?,?,?)').run(email.toLowerCase(),name,role,hash(p),O.newSecret());O.log(null,'owner.add',null,`${email} ${role}`);console.log(`Created ${role} ${email}\nTemporary password: ${p}\nTwo-step verification is set up at first login at /owners`)}
+else if(cmd=='reset'&&email){const p=pw(),r=db.prepare('UPDATE owners SET pw=?,totp=?,totp_on=0,last_step=0 WHERE email=?').run(hash(p),O.newSecret(),email.toLowerCase());if(!r.changes)console.log('No such owner');else{O.log(null,'owner.reset',null,email);db.prepare('DELETE FROM owner_sessions WHERE owner_id IN(SELECT id FROM owners WHERE email=?)').run(email.toLowerCase());console.log(`New temporary password: ${p}`)}}
+else console.log('Usage: node owners-cli.js add <email> "<name>" owner|finance|support\n       node owners-cli.js reset <email>');

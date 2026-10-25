@@ -1,0 +1,13 @@
+// Phase 10s: exam timetable footer (publish, and the send-to-submission button when it was declined), drag and drop on the class grid. Loaded after inv.js.
+Object.assign(D.en,{et_tap:'Tap a paper to edit it, or drag it onto another cell to move it.',ew_inv_n:'No invigilator',ew_inv_np:'Papers are written with nobody assigned',et_post_h:'Timetable published',et_post_p:'Send the exam dates to exam submission now? Teachers are then asked to upload their papers.',et_post_no:'Not now',pb_foot_note:'Publishing suspends the lessons of classes that are writing and lets teachers confirm their invigilation.',et_dnd_tip:'Drag a paper onto another cell to move it or swap two papers. Green means it fits, red tells you why not.'});
+Object.assign(D.fr,{et_tap:'Touchez une épreuve pour la modifier, ou glissez-la sur une autre case pour la déplacer.',ew_inv_n:'Pas de surveillant',ew_inv_np:'Les épreuves se passent sans surveillant désigné',et_post_h:'Emploi du temps publié',et_post_p:'Envoyer maintenant les dates aux soumissions d’examens ? Les enseignants devront alors charger leurs épreuves.',et_post_no:'Pas maintenant',pb_foot_note:'La publication suspend les cours des classes en examen et permet aux enseignants de confirmer leur surveillance.',et_dnd_tip:'Glissez une épreuve sur une autre case pour la déplacer ou l’échanger. Vert : possible, rouge : la raison s’affiche.'});
+for(const l of['en','fr'])for(const c of['class_overlap','cap','break'])D[l]['sw_'+c]=D[l]['w_'+c];
+// the bottom bar: Publish / Unpublish, and "Send to exam submission" only while something is still waiting to be sent
+async function ettFoot(){const h=document.getElementById('ettfoot');if(!h||!ET.v)return;const tt=ET.v.tt;
+ h.innerHTML=`<span class="tw-mu grow">${tt.published?'':t('pb_foot_note')}</span><span id=ettsend></span><button type=button class="${tt.published?'tw-btn ghost':'tw-btn go'}" onclick="ettPub(${tt.published?0:1})">${tt.published?t('pb_un'):'✔ '+t('pb_go')}</button>`;
+ if(!tt.published)return;const r=await api('examtt/'+ET.open+'/apply',{dry:true});const s=document.getElementById('ettsend');
+ if(r.ok&&s&&(r.d.set+r.d.created)>0)s.innerHTML=`<button type=button class="tw-btn blue" onclick="ettApplyAsk()">${fi('check',18)} ${t('et_apply')}</button>`}
+window.ettFoot=ettFoot;
+{const o=ettDraw;ettDraw=function(){o();const host=document.getElementById('tt');if(!host||!ET.v)return;
+ host.insertAdjacentHTML('beforeend','<div id=ettfoot class="ett-foot noprint"></div>');ettFoot();
+ if(ET.gv=='c'&&document.getElementById('ettgrid'))twDnd(document.getElementById('ettgrid'),{url:`examtt/${ET.open}/swap`,body:()=>({class_id:ET.gc,starts:ET.gstarts||[]}),done:d=>{ET.v=d;ettDraw()}})}}

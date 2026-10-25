@@ -1,0 +1,40 @@
+# Cloudflare deployment of the school platform. See CLOUDFLARE.md for the step-by-step guide.
+name = "school-platform"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]                             # the SPA, owners console and icons: served from the edge, exact files only
+directory = "../public"
+binding = "ASSETS"
+html_handling = "none"
+not_found_handling = "none"
+
+[[durable_objects.bindings]]         # the database: SQLite inside one Durable Object
+name = "SCHOOLS"
+class_name = "SchoolDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SchoolDO"]
+
+[[r2_buckets]]                       # exam PDFs and the nightly per-school exports
+binding = "FILES"
+bucket_name = "school-platform-files"
+
+[triggers]
+crons = ["*/15 * * * *"]             # replaces the Node timers (cleanups, exam sweep, billing, nightly export)
+
+[observability]                      # logs you can read with `npm run cf:logs` and in the dashboard
+enabled = true
+
+[vars]
+NODE_ENV = "production"
+# PUBLIC_URL = "https://app.your-domain.com"   # set once you have your domain: used in QR codes and e-mails
+# BILLING_NAME = "Your company name"          # optional, printed on invoices
+
+[define]                             # pdfkit reads import.meta.url; there is no file system on Workers
+"import.meta.url" = "'file:///app/index.js'"
+"__dirname" = "'/app'"             # path.join(__dirname,'public',...) in the sendFile calls; the file is read from the assets binding
+
+# Secrets (never in this file):  wrangler secret put ADMIN_KEY   (data move-in)   /   RESEND_API_KEY   /   MAIL_FROM   /   PUBLIC_URL

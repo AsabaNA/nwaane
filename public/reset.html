@@ -1,0 +1,11 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content="noindex"><title>Set a new password</title><link rel=stylesheet href=owners.css></head><body>
+<div class=login><div class=logo style="color:var(--ink)"><i></i><span id=ap>School Platform</span></div><div class=card id=cd><h1>Set a new password</h1><p class=sub id=sb>Choose a password with at least 8 characters. The link works once.</p>
+<form onsubmit="return go(event)"><div class=f><label for=p1>New password</label><input id=p1 type=password autocomplete=new-password minlength=8 required></div><div class=f style="margin-top:12px"><label for=p2>Repeat it</label><input id=p2 type=password autocomplete=new-password minlength=8 required></div><p class=err id=e></p><button class="b p" style="width:100%;margin-top:14px;justify-content:center">Save password</button></form></div></div>
+<script>
+const tok=new URLSearchParams(location.search).get('token')||'';
+async function go(e){e.preventDefault();if($('#p1').value!=$('#p2').value)return $('#e').textContent='The two passwords do not match.',false;
+ const r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,password:$('#p1').value})});const d=await r.json().catch(()=>({}));
+ if(!r.ok)return $('#e').textContent=r.status==410?'This link has expired or was already used. Ask for a new one.':r.status==429?'Too many attempts. Try again later.':'Choose a password with at least 8 characters.',false;
+ $('#cd').innerHTML=`<h1>Password changed</h1><p class=sub>Sign in with school code <b>${d.code}</b> and username <b>${d.username}</b>.</p><a class="b p" href="/" style="margin-top:14px">Go to sign in</a>`;return false}
+function $(s){return document.querySelector(s)}
+</script></body></html>

@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0c12"><title>Staff badge</title><link rel="preload" href="/fonts/Sora-700.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/style.css">
+<style>
+/* Redesign step 2 — class check-in (public phone page). Meridian tokens come from style.css. */
+body.ck-body{margin:0;background:var(--m-paper);color:var(--m-ink);font:400 16px/1.5 var(--m-body)}
+.ck{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:0 16px 32px;box-sizing:border-box}
+.ck *{box-sizing:border-box}
+.ck-top{width:100%;max-width:440px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.ck-logo{display:flex;align-items:center;gap:10px;font:800 17px var(--m-display)}.ck-logo i{width:11px;height:11px;background:var(--m-brand);transform:rotate(45deg)}
+.ck-lang{display:flex;gap:2px}
+.ck-lang button{min-width:44px;min-height:44px;margin:0;padding:0 8px;background:none;border:0;border-radius:var(--m-radius);color:var(--m-ink-soft);font:600 13px/1 var(--m-body);letter-spacing:.04em;cursor:pointer}
+.ck-lang button.on{color:var(--m-ink);box-shadow:inset 0 -2px 0 var(--m-brand)}
+.ck-card{width:100%;max-width:440px;background:var(--m-card);border:1px solid var(--m-border);border-radius:var(--m-radius);overflow:hidden}
+.ck-head{padding:24px 24px 20px;background:var(--m-ink);color:#fff}
+.ck-eb{display:block;font:600 12px var(--m-mono);letter-spacing:.06em;text-transform:uppercase;color:#9aa7ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ck-head h1{margin:8px 0 0;font:700 34px/1.1 var(--m-display);color:#fff}
+.ck-lesson{margin:10px 0 0;font-size:15px;color:#cfd2dc}.ck-lesson b{color:#fff}
+.ck-body-in{padding:28px 24px 24px}
+.ck-ico{width:56px;height:56px;border-radius:var(--m-radius);display:flex;align-items:center;justify-content:center;background:var(--m-info-bg);color:var(--m-brand)}
+.ck-ico.ok{background:#e8f4ec;color:#1f7a3d}.ck-ico.warn{background:#fff4e0;color:#b45309}.ck-ico.bad{background:#fdeceb;color:#c62828}
+.ck h2{margin:18px 0 6px;font:700 22px/1.25 var(--m-display);color:var(--m-ink)}
+.ck-p{margin:0;font-size:16px;color:var(--m-ink-soft)}
+.ck-sum{margin:0 0 14px}.ck-sum label{display:block;margin:0 0 8px;font:600 12.5px var(--m-body);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}.ck-sum textarea{display:block;width:100%;padding:12px 16px;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:400 16px/1.4 var(--m-body);outline:0;resize:vertical}.ck-sum textarea:focus{border-color:var(--m-brand);box-shadow:0 0 0 3px rgba(69,90,255,.18)}
+.ck-hint{margin:16px 0 0;font:600 12px var(--m-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.ck-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:72px;margin:24px 0 0;padding:12px 16px;background:var(--m-brand);color:#fff;border:0;border-radius:var(--m-radius);font:700 19px/1.2 var(--m-display);cursor:pointer;text-align:center;white-space:normal;transition:background .15s}
+.ck-btn:hover{background:var(--m-brand-hover)}.ck-btn:disabled{opacity:.6;cursor:wait}
+.ck-btn.alt{background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);min-height:56px;font-size:16px}.ck-btn.alt:hover{background:var(--m-muted)}
+.ck-btn.sw{background:#fff;color:var(--m-ink)}
+.ck-f label{display:block;margin:18px 0 8px;font:600 12.5px var(--m-body);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.ck-f input{display:block;width:100%;height:52px;padding:0 16px;margin:0;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:400 17px var(--m-body);outline:0}
+.ck-f input:focus{border-color:var(--m-brand);box-shadow:0 0 0 3px rgba(69,90,255,.18)}
+.ck-err{margin:14px 0 0;padding:10px 12px;font-size:14px;font-weight:600;color:var(--m-danger);background:#fdeceb;border-left:3px solid var(--m-danger);border-radius:0 var(--m-radius) var(--m-radius) 0}
+.ck-late{margin:0 0 20px;padding:10px 12px;font-size:14px;font-weight:600;color:#b45309;background:#fff4e0;border-left:3px solid #b45309;border-radius:0 var(--m-radius) var(--m-radius) 0}
+.ck-foot{width:100%;max-width:440px;margin-top:16px;text-align:center;font-size:14px;color:var(--m-ink-soft)}
+.ck-foot a{color:var(--m-brand);font-weight:700;text-decoration:none;display:inline-block;padding:10px 6px}
+.ck :focus-visible{outline:2px solid var(--m-brand);outline-offset:2px}
+@media(max-width:360px){.ck-head h1{font-size:28px}.ck-btn{font-size:17px}}
+@media(prefers-reduced-motion:no-preference){.ck-card{animation:ckin .35s ease both}@keyframes ckin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+.rl-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 12px}.rl-top b{font:700 15px var(--m-display)}
+.rl-list{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
+.rl-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:52px;margin:0;padding:8px 14px;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:500 16px/1.3 var(--m-body);text-align:left;cursor:pointer}
+.rl-row small{display:block;font-size:12px;color:var(--m-ink-soft)}
+.rl-row i{font-style:normal;font:700 12px var(--m-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.rl-row.ab{background:#fdeceb;border-color:#e8a7a3}.rl-row.ab i{color:#c62828}
+</style><style>.tb-ph{width:96px;height:128px;border-radius:8px;object-fit:cover;background:var(--m-muted);display:block;margin:0 0 14px}.tb-ph.e{display:flex;align-items:center;justify-content:center;color:var(--m-ink-soft)}
+.tb-st{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}.tb-st span{padding:4px 10px;border-radius:12px;background:var(--m-muted);font:600 13px var(--m-body)}.tb-st .ok{background:#e8f4ec;color:#1f7a3d}.tb-st .w{background:#fff4e0;color:#b45309}</style></head><body class="ck-body"><div class=ck id=m></div><script>
+const q=new URLSearchParams(location.search),CODE=decodeURIComponent(location.pathname.split('/').pop()||'').toUpperCase();let L=localStorage.lang||((navigator.language||'en').startsWith('fr')?'fr':'en'),I=null,MSG='',EARLY=0;
+const D={en:{brand:'Meridian',gone:'Badge not found',gone_d:'This code does not match any badge. Check that the card is the school\u2019s.',valid:'Valid badge',expired:'Expired badge',expired_d:'This badge is from a previous school year.',replaced:'Badge replaced',replaced_d:'This card was reported lost or replaced. Do not accept it.',left:'No longer on staff',left_d:'This person is no longer on the school\u2019s staff.',
+ signin:'Gate staff: sign in',signin_d:'Sign in to record this person\u2019s arrival or departure.',user:'Username',pass:'Password',go:'Sign in',bad:'Wrong username or password.',logout:'Not you? Sign out',nogate:'Your account cannot use the gate',nogate_d:'Ask the principal to give you gate access.',
+ arrive:'Arrived',leave:'Left',arrived:'Arrived',lefts:'Left',done:'Done for today',notarr:'Not arrived yet',early:'Left early',staff:'Staff member. Attendance is recorded for teachers only.',noday:'Today is not a school day.',
+ early_h:'Lessons still ahead',early_d:'[n] lesson(s) are still scheduled for this teacher today. Mark as left anyway?',early_go:'Yes, mark as left',back:'Cancel',err:'Something went wrong. Try again.',already:'Already recorded.',role_teacher:'Teacher',role_principal:'Principal',role_secretary:'Secretary',role_surveillant:'Supervisor',signed:'Recorded.'},
+ fr:{brand:'Meridian',gone:'Carte introuvable',gone_d:'Ce code ne correspond \u00e0 aucune carte. V\u00e9rifiez que c\u2019est une carte de l\u2019\u00e9cole.',valid:'Carte valide',expired:'Carte expir\u00e9e',expired_d:'Cette carte date d\u2019une ann\u00e9e scolaire pr\u00e9c\u00e9dente.',replaced:'Carte remplac\u00e9e',replaced_d:'Cette carte a \u00e9t\u00e9 d\u00e9clar\u00e9e perdue ou remplac\u00e9e. Ne l\u2019acceptez pas.',left:'Ne fait plus partie du personnel',left_d:'Cette personne ne fait plus partie du personnel de l\u2019\u00e9cole.',
+ signin:'Portail : connectez-vous',signin_d:'Connectez-vous pour enregistrer l\u2019arriv\u00e9e ou le d\u00e9part de cette personne.',user:'Identifiant',pass:'Mot de passe',go:'Connexion',bad:'Identifiant ou mot de passe incorrect.',logout:'Ce n\u2019est pas vous ? D\u00e9connexion',nogate:'Votre compte ne peut pas utiliser le portail',nogate_d:'Demandez au principal de vous donner l\u2019acc\u00e8s au portail.',
+ arrive:'Arriv\u00e9(e)',leave:'Parti(e)',arrived:'Arriv\u00e9(e)',lefts:'Parti(e)',done:'Termin\u00e9 pour aujourd\u2019hui',notarr:'Pas encore arriv\u00e9(e)',early:'Parti(e) t\u00f4t',staff:'Membre du personnel. La pr\u00e9sence n\u2019est enregistr\u00e9e que pour les enseignants.',noday:'Aujourd\u2019hui n\u2019est pas un jour de classe.',
+ early_h:'Cours encore pr\u00e9vus',early_d:'[n] cours sont encore pr\u00e9vus aujourd\u2019hui pour cet enseignant. Marquer comme parti quand m\u00eame ?',early_go:'Oui, marquer comme parti',back:'Annuler',err:'Une erreur s\u2019est produite. R\u00e9essayez.',already:'D\u00e9j\u00e0 enregistr\u00e9.',role_teacher:'Enseignant',role_principal:'Principal',role_secretary:'Secr\u00e9taire',role_surveillant:'Surveillant',signed:'Enregistr\u00e9.'}};
+const t=(k,o)=>{let s=(D[L][k]||D.en[k]||k);for(const a in o||{})s=s.replace('['+a+']',o[a]);return s},esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const post=async(u,b)=>{const r=await fetch('/api/'+u,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b||{})});let d={};try{d=await r.json()}catch{}return{ok:r.ok,s:r.status,d}};
+const lang=()=>`<div class=ck-lang>${['en','fr'].map(l=>`<button class="${L==l?'on':''}" onclick="L='${l}';localStorage.lang=L;draw()">${l.toUpperCase()}</button>`).join('')}</div>`;
+async function load(m=''){MSG=m;EARLY=0;try{I=await (await fetch('/api/tscan/info?code='+encodeURIComponent(CODE))).json()}catch{I={state:'err'}}draw()}
+function draw(){const o=I||{},bad=['invalid','replaced','left','expired'].includes(o.state);let tone='ok',title='',p='',body='';
+ if(o.state=='invalid'||o.state=='err'){tone='bad';title=t(o.state=='err'?'err':'gone');p=t('gone_d')}
+ else if(bad){tone=o.state=='expired'?'warn':'bad';title=t(o.state);p=t(o.state+'_d')}
+ else{title=t('valid')}
+ const role=o.role?t('role_'+o.role):'';
+ let act='';
+ if(!bad&&o.state!='invalid'&&o.state!='err'){
+  if(o.login){act=`<p class=ck-p style="margin-top:18px"><b>${t('signin')}</b><br>${t('signin_d')}</p><form class=ck-f onsubmit="go();return false"><label for=u>${t('user')}</label><input id=u autocomplete=username autocapitalize=off spellcheck=false><label for=p>${t('pass')}</label><input id=p type=password autocomplete=current-password><button class=ck-btn id=sb type=submit style="min-height:56px">${t('go')}</button></form>`}
+  else if(o.nogate){act=`<p class=ck-late>${t('nogate')}. ${t('nogate_d')}</p>`}
+  else if(o.me!==undefined&&o.teacher===false){act=`<p class=ck-p style="margin-top:16px">${t('staff')}</p>`}
+  else if(o.me!==undefined){const st=[];if(o.in_at)st.push(`<span class=ok>${t('arrived')} ${o.in_at}</span>`);if(o.out_at)st.push(`<span class="${o.flag=='early'?'w':'ok'}">${t('lefts')} ${o.out_at}${o.flag=='early'?' · '+t('early'):''}</span>`);if(!o.in_at)st.push(`<span>${t('notarr')}</span>`);
+   act=(o.day?'':`<p class=ck-late>${t('noday')}</p>`)+`<div class=tb-st>${st.join('')}</div>`;
+   if(EARLY)act+=`<div class=ck-late style="margin-top:16px"><b>${t('early_h')}</b><br>${t('early_d',{n:EARLY})}</div><button class=ck-btn onclick="mark('out',1)">${t('early_go')}</button><button class="ck-btn alt" onclick="EARLY=0;draw()">${t('back')}</button>`;
+   else if(!o.in_at)act+=`<button class=ck-btn onclick="mark('in')">${t('arrive')}</button>`;else if(!o.out_at)act+=`<button class="ck-btn" style="background:#b45309" onclick="mark('out')">${t('leave')}</button>`;else act+=`<p class=ck-p style="margin-top:16px">${t('done')}</p>`}}
+ $('m').innerHTML=`<div class=ck-top><div class=ck-logo><i aria-hidden=true></i>${t('brand')}</div>${lang()}</div><main class=ck-card><div class=ck-head><span class=ck-eb>${esc(o.school||'')}</span><h1>${esc(o.name||t('gone'))}</h1>${role?`<p class=ck-lesson><b>${esc(role)}</b></p>`:''}</div>
+ <div class=ck-body-in aria-live=polite>${o.photo&&o.me!==undefined?`<img class=tb-ph alt="" src="/api/tscan/photo?code=${encodeURIComponent(CODE)}">`:''}<h2 style="margin-top:0;color:${tone=='bad'?'var(--m-danger)':tone=='warn'?'#b45309':'inherit'}">${esc(title)}</h2><p class=ck-p>${p}</p>${MSG?`<p class=ck-err>${esc(MSG)}</p>`:''}${act}</div></main>
+ ${o.me?`<p class=ck-foot>${esc(o.me)} · <a href=# onclick="out();return false">${t('logout')}</a></p>`:''}`}
+const $=id=>document.getElementById(id);
+async function go(){$('sb').disabled=true;const r=await post('login',{code:I.scode,username:$('u').value,password:$('p').value});r.ok&&!r.d.step?load():(MSG=t('bad'),draw())}
+async function mark(a,c){const r=await post('tscan/mark',{code:CODE,action:a,confirm_early:!!c});
+ if(r.ok)return load();if(r.d.error=='early'){EARLY=r.d.ahead;return draw()}await load(t(r.d.error=='already'?'already':'err'))}
+async function out(){await post('logout',{});load()}
+load();</script></body></html>

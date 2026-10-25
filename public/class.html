@@ -1,0 +1,108 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0c12"><title>Class check-in</title><link rel="preload" href="/fonts/Sora-700.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/style.css">
+<style>
+/* Redesign step 2 — class check-in (public phone page). Meridian tokens come from style.css. */
+body.ck-body{margin:0;background:var(--m-paper);color:var(--m-ink);font:400 16px/1.5 var(--m-body)}
+.ck{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:0 16px 32px;box-sizing:border-box}
+.ck *{box-sizing:border-box}
+.ck-top{width:100%;max-width:440px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.ck-logo{display:flex;align-items:center;gap:10px;font:800 17px var(--m-display)}.ck-logo i{width:11px;height:11px;background:var(--m-brand);transform:rotate(45deg)}
+.ck-lang{display:flex;gap:2px}
+.ck-lang button{min-width:44px;min-height:44px;margin:0;padding:0 8px;background:none;border:0;border-radius:var(--m-radius);color:var(--m-ink-soft);font:600 13px/1 var(--m-body);letter-spacing:.04em;cursor:pointer}
+.ck-lang button.on{color:var(--m-ink);box-shadow:inset 0 -2px 0 var(--m-brand)}
+.ck-card{width:100%;max-width:440px;background:var(--m-card);border:1px solid var(--m-border);border-radius:var(--m-radius);overflow:hidden}
+.ck-head{padding:24px 24px 20px;background:var(--m-ink);color:#fff}
+.ck-eb{display:block;font:600 12px var(--m-mono);letter-spacing:.06em;text-transform:uppercase;color:#9aa7ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ck-head h1{margin:8px 0 0;font:700 34px/1.1 var(--m-display);color:#fff}
+.ck-lesson{margin:10px 0 0;font-size:15px;color:#cfd2dc}.ck-lesson b{color:#fff}
+.ck-body-in{padding:28px 24px 24px}
+.ck-ico{width:56px;height:56px;border-radius:var(--m-radius);display:flex;align-items:center;justify-content:center;background:var(--m-info-bg);color:var(--m-brand)}
+.ck-ico.ok{background:#e8f4ec;color:#1f7a3d}.ck-ico.warn{background:#fff4e0;color:#b45309}.ck-ico.bad{background:#fdeceb;color:#c62828}
+.ck h2{margin:18px 0 6px;font:700 22px/1.25 var(--m-display);color:var(--m-ink)}
+.ck-p{margin:0;font-size:16px;color:var(--m-ink-soft)}
+.ck-sum{margin:0 0 14px}.ck-sum label{display:block;margin:0 0 8px;font:600 12.5px var(--m-body);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}.ck-sum textarea{display:block;width:100%;padding:12px 16px;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:400 16px/1.4 var(--m-body);outline:0;resize:vertical}.ck-sum textarea:focus{border-color:var(--m-brand);box-shadow:0 0 0 3px rgba(69,90,255,.18)}
+.ck-hint{margin:16px 0 0;font:600 12px var(--m-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.ck-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:72px;margin:24px 0 0;padding:12px 16px;background:var(--m-brand);color:#fff;border:0;border-radius:var(--m-radius);font:700 19px/1.2 var(--m-display);cursor:pointer;text-align:center;white-space:normal;transition:background .15s}
+.ck-btn:hover{background:var(--m-brand-hover)}.ck-btn:disabled{opacity:.6;cursor:wait}
+.ck-btn.alt{background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);min-height:56px;font-size:16px}.ck-btn.alt:hover{background:var(--m-muted)}
+.ck-btn.sw{background:#fff;color:var(--m-ink)}
+.ck-f label{display:block;margin:18px 0 8px;font:600 12.5px var(--m-body);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.ck-f input{display:block;width:100%;height:52px;padding:0 16px;margin:0;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:400 17px var(--m-body);outline:0}
+.ck-f input:focus{border-color:var(--m-brand);box-shadow:0 0 0 3px rgba(69,90,255,.18)}
+.ck-err{margin:14px 0 0;padding:10px 12px;font-size:14px;font-weight:600;color:var(--m-danger);background:#fdeceb;border-left:3px solid var(--m-danger);border-radius:0 var(--m-radius) var(--m-radius) 0}
+.ck-late{margin:0 0 20px;padding:10px 12px;font-size:14px;font-weight:600;color:#b45309;background:#fff4e0;border-left:3px solid #b45309;border-radius:0 var(--m-radius) var(--m-radius) 0}
+.ck-foot{width:100%;max-width:440px;margin-top:16px;text-align:center;font-size:14px;color:var(--m-ink-soft)}
+.ck-foot a{color:var(--m-brand);font-weight:700;text-decoration:none;display:inline-block;padding:10px 6px}
+.ck :focus-visible{outline:2px solid var(--m-brand);outline-offset:2px}
+@media(max-width:360px){.ck-head h1{font-size:28px}.ck-btn{font-size:17px}}
+@media(prefers-reduced-motion:no-preference){.ck-card{animation:ckin .35s ease both}@keyframes ckin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+.rl-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 12px}.rl-top b{font:700 15px var(--m-display)}
+.rl-list{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
+.rl-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:52px;margin:0;padding:8px 14px;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:500 16px/1.3 var(--m-body);text-align:left;cursor:pointer}
+.rl-row small{display:block;font-size:12px;color:var(--m-ink-soft)}
+.rl-row i{font-style:normal;font:700 12px var(--m-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.rl-row.ab{background:#fdeceb;border-color:#e8a7a3}.rl-row.ab i{color:#c62828}
+</style></head><body class="ck-body"><div id=m class=ck></div><script>
+const D={en:{hi:'Hello',here:'I’m here — confirm lesson',as:'Confirm as replacement for {s}',login:'Sign in',user:'Username',pass:'Password',bad:'Wrong username or password.',
+done:'Presence confirmed',late:'Confirmed — late',present:'Present',replaced:'Replacement recorded',replaced_d:'Waiting for the principal’s approval.',taken:'Already confirmed',taken_d:'This lesson was already confirmed by someone else.',
+suspended:'Lesson suspended',suspended_d:'This class is writing an exam during this lesson, so it cannot be confirmed.',nogate:'Arrival not recorded yet',nogate_d:'Ask the surveillant to record your arrival, then press the button below.',noperiod:'No lesson open now',noperiod_d:'No lesson is open for this class right now.',next:'Next lesson: period {p} at {t}.',nolesson:'No lesson here',nolesson_d:'This class has no lesson in this period.',noschool:'No school today',who:'Teachers only',who_d:'Only teachers of this school can confirm a lesson.',
+busy:'Already confirmed elsewhere',busy_d:'You are already confirmed in {c} at this time.',period:'Period',err:'Something went wrong',err_d:'Please try again.',other:'Not you?',logout:'Sign out',retry:'Check again',late_:'You are a few minutes late. It will be recorded as late.',
+ready:'Ready to confirm',ready_r:'Replacing {s}',gate:'Checked in at the gate at {t}',win:'On-time window closes at {t}',signin:'Sign in to confirm',signin_d:'Use your school account.',confirmed_at:'Confirmed at {t}',brand:'Meridian',wait:'One moment…',locw:'Finding your location…',loc_none:'Location is required. Allow location for this site in your browser, then press the button again. Confirming only works from inside the school.',loc_far:'You are about {m} m from the school. You can only confirm from inside the school.',loc_weak:'Your location is not precise enough. Turn on GPS or step outside, then try again.',locnote:'Your location is checked once, only to confirm you are at the school.'},
+fr:{hi:'Bonjour',here:'Je suis là — confirmer le cours',as:'Confirmer comme remplaçant de {s}',login:'Se connecter',user:'Identifiant',pass:'Mot de passe',bad:'Identifiant ou mot de passe incorrect.',
+done:'Présence confirmée',late:'Confirmé — en retard',present:'Présent',replaced:'Remplacement enregistré',replaced_d:'En attente de l’approbation du chef d’établissement.',taken:'Déjà confirmé',taken_d:'Ce cours a déjà été confirmé par quelqu’un d’autre.',
+suspended:'Cours suspendu',suspended_d:'Cette classe est en examen pendant ce cours : il ne peut pas être confirmé.',nogate:'Arrivée non enregistrée',nogate_d:'Demandez au surveillant d’enregistrer votre arrivée, puis appuyez sur le bouton ci-dessous.',noperiod:'Aucun cours ouvert',noperiod_d:'Aucun cours n’est ouvert pour cette classe en ce moment.',next:'Prochain cours : période {p} à {t}.',nolesson:'Pas de cours ici',nolesson_d:'Cette classe n’a pas de cours à cette période.',noschool:'Pas de classe aujourd’hui',who:'Réservé aux enseignants',who_d:'Seuls les enseignants de cet établissement peuvent confirmer un cours.',
+busy:'Déjà confirmé ailleurs',busy_d:'Vous êtes déjà confirmé en {c} à cette heure.',period:'Période',err:'Une erreur est survenue',err_d:'Veuillez réessayer.',other:'Ce n’est pas vous ?',logout:'Se déconnecter',retry:'Vérifier à nouveau',late_:'Vous avez quelques minutes de retard. Ce sera noté comme retard.',
+ready:'Prêt à confirmer',ready_r:'Remplacement de {s}',gate:'Arrivée enregistrée à l’entrée à {t}',win:'La présence à l’heure se ferme à {t}',signin:'Connectez-vous pour confirmer',signin_d:'Utilisez votre compte d’école.',confirmed_at:'Confirmé à {t}',brand:'Meridian',wait:'Un instant…',locw:'Recherche de votre position…',loc_none:'La localisation est obligatoire. Autorisez-la pour ce site dans votre navigateur, puis appuyez de nouveau sur le bouton. La confirmation ne fonctionne que depuis l’école.',loc_far:'Vous êtes à environ {m} m de l’école. Vous ne pouvez confirmer que depuis l’école.',loc_weak:'Votre position n’est pas assez précise. Activez le GPS ou sortez dehors, puis réessayez.',locnote:'Votre position est vérifiée une seule fois, uniquement pour confirmer que vous êtes à l’école.'}};
+let L=localStorage.lang||((navigator.language||'').startsWith('fr')?'fr':'en');const t=(k,v={})=>Object.entries(v).reduce((s,[a,b])=>s.replace('{'+a+'}',b),D[L][k]||k),esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TOK=location.pathname.split('/').pop(),$=s=>document.querySelector(s);
+Object.assign(D.en,{sum_l:'What did you teach today?',sum_ph:'A short summary, e.g. Chapter 3: adding and subtracting fractions',sum_req:'Please write a short summary of the lesson before confirming.'});
+Object.assign(D.fr,{sum_l:'Qu’avez-vous enseigné aujourd’hui ?',sum_ph:'Un bref résumé, p. ex. Chapitre 3 : addition et soustraction de fractions',sum_req:'Veuillez écrire un bref résumé du cours avant de confirmer.'});
+Object.assign(D.en,{rl_btn:'Take roll',rl_edit:'Edit roll',rl_h:'Roll call',rl_p:'Tap the students who are absent. Everyone else is present.',rl_ab:'Absent',rl_pr:'Present',rl_save:'Save roll',rl_back:'Back',rl_n:'{n} absent',rl_saved:'Roll saved.',rl_no:'No students in this class.',rl_err:'Could not save. Try again.'});
+Object.assign(D.fr,{rl_btn:'Faire l’appel',rl_edit:'Modifier l’appel',rl_h:'Appel',rl_p:'Touchez les élèves absents. Les autres sont présents.',rl_ab:'Absent',rl_pr:'Présent',rl_save:'Enregistrer l’appel',rl_back:'Retour',rl_n:'{n} absent(s)',rl_saved:'Appel enregistré.',rl_no:'Aucun élève dans cette classe.',rl_err:'Échec de l’enregistrement. Réessayez.'});
+let SUM='',RS=null;
+async function rollOpen(){const r=await fetch(`/api/roll/sheet?class_id=${I.cid}&period=${I.period}&date=${I.rdate}`);let d={};try{d=await r.json()}catch{}if(!r.ok)return draw(t('err_d'));RS=d;rollDraw()}
+const rlN=()=>RS.students.filter(s=>s.absent).length;
+function rollDraw(m=''){$('#m').innerHTML=`<div class=ck-top><div class=ck-logo><i aria-hidden=true></i>${t('brand')}</div>${lang()}</div><main class=ck-card><div class=ck-head><span class=ck-eb>${esc(I.school)}</span><h1>${esc(I.cls)}</h1><p class=ck-lesson><b>${t('rl_h')}</b> · ${esc(RS.subject||'')} · ${t('period')} ${RS.period}</p></div>
+ <div class=ck-body-in><p class=ck-p style="margin-bottom:14px">${RS.students.length?t('rl_p'):t('rl_no')}</p><div class=rl-top><b id=rn>${t('rl_n',{n:rlN()})}</b></div><div class=rl-list>${RS.students.map((s,i)=>`<button type=button class="rl-row ${s.absent?'ab':''}" onclick="rollTog(${i})" aria-pressed="${s.absent}"><span>${esc(s.name)}<small>${esc(s.matricule||'')}</small></span><i>${s.absent?t('rl_ab'):t('rl_pr')}</i></button>`).join('')}</div>
+ ${m?`<p class=ck-err role=alert>${m}</p>`:''}<button class=ck-btn id=rs onclick="rollSave()">${ic('check',24)}<span>${t('rl_save')}</span></button><button class="ck-btn alt" onclick="draw()">${t('rl_back')}</button></div></main>`}
+function rollTog(i){RS.students[i].absent=!RS.students[i].absent;const y=scrollY;rollDraw();scrollTo(0,y)}
+async function rollSave(){const b=$('#rs');b.disabled=true;const r=await post('roll/save',{class_id:I.cid,date:I.rdate,period:I.period,absent:RS.students.filter(s=>s.absent).map(s=>s.id)});if(!r.ok)return rollDraw(t('rl_err'));I.rolled=true;I.rollMsg=t('rl_saved')+' '+t('rl_n',{n:r.d.absent});draw()}
+const post=async(u,b)=>{const r=await fetch('/api/'+u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});let d={};try{d=await r.json()}catch{}return{ok:r.ok,s:r.status,d}};
+const IC={check:'<path d="M20 6 9 17l-5-5"/>',qr:'<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',
+ clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',alert:'<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+ user:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',cal:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>'};
+const ic=(n,s=28)=>`<svg width=${s} height=${s} viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round aria-hidden=true>${IC[n]}</svg>`;
+const lang=()=>`<div class=ck-lang role=group aria-label="Language">${['en','fr'].map(l=>`<button type=button class="${L==l?'on':''}" aria-pressed="${L==l}" onclick="if(L!='${l}'){L='${l}';localStorage.lang=L;draw()}">${l.toUpperCase()}</button>`).join('')}</div>`;
+let I;
+async function load(m=''){const r=await fetch('/api/qr/info?token='+encodeURIComponent(TOK));if(!r.ok){I={state:'err',cls:'—',school:''};return draw()}I=await r.json();draw(m)}
+// state -> [icon, tone, title key, detail]
+function view(o,m){const per=o.period?`${t('period')} ${o.period} · ${o.start}–${o.end}`:'';
+ switch(o.state){
+ case'login':return{i:'qr',tone:'',title:t('signin'),p:t('signin_d'),form:1};
+ case'ready':return{i:'check',tone:'ok',title:t('ready'),p:o.mine?esc(o.me)+(o.arrived?' · '+t('gate',{t:o.arrived}):''):t('ready_r',{s:esc(o.sched||'—')})+(o.arrived?'<br>'+esc(o.me)+' · '+t('gate',{t:o.arrived}):''),pre:o.late?`<p class=ck-late role=status>${t('late_')}</p>`:'',btn:o.mine?t('here'):t('as',{s:esc(o.sched||'—')}),hint:o.mine&&o.until&&!o.late?t('win',{t:o.until}):''};
+ case'done':{const late=o.status=='late',rep=o.status=='replaced',wait=rep&&o.appr==null;return{i:wait?'clock':'check',tone:wait||late?'warn':'ok',title:late?t('late'):rep?t('replaced'):t('done'),p:wait?t('replaced_d'):t('confirmed_at',{t:(o.at||'').slice(11,16)})}}
+ case'taken':return{i:'user',tone:'warn',title:t('taken'),p:t('taken_d')};
+ case'nogate':return{i:'clock',tone:'warn',title:t('nogate'),p:t('nogate_d'),retry:1};
+ case'noperiod':return{i:'clock',tone:'',title:t('noperiod'),p:t('noperiod_d')+(o.next?' '+t('next',{p:o.next.period,t:o.next.start}):''),retry:1};
+ case'busy':return{i:'alert',tone:'bad',title:t('busy'),p:t('busy_d',{c:esc(o.cls)})};
+ case'suspended':return{i:'cal',tone:'',title:t('suspended'),p:t('suspended_d')};
+ case'nolesson':return{i:'cal',tone:'',title:t('nolesson'),p:t('nolesson_d')};
+ case'noschool':return{i:'cal',tone:'',title:t('noschool'),p:esc(o.label||'')};
+ case'who':return{i:'lock',tone:'warn',title:t('who'),p:t('who_d')};
+ default:return{i:'alert',tone:'warn',title:t('err'),p:t('err_d'),retry:1}}}
+function draw(m=''){const o=I,v=view(o,m),lesson=o.subject?`<p class=ck-lesson><b>${esc(o.subject)}</b>${o.period?' · '+t('period')+' '+o.period+' · <span style="white-space:nowrap">'+o.start+'–'+o.end+'</span>':''}</p>`:'';
+ $('#m').innerHTML=`<div class=ck-top><div class=ck-logo><i aria-hidden=true></i>${t('brand')}</div>${lang()}</div>
+ <main class=ck-card><div class=ck-head><span class=ck-eb>${esc(o.school)}</span><h1>${esc(o.cls)}</h1>${lesson}</div>
+ <div class=ck-body-in aria-live=polite>${v.pre||''}<div class="ck-ico ${v.tone}">${ic(v.i)}</div><h2>${v.title}</h2><p class=ck-p>${v.p||''}</p>
+ ${v.form?`<form class=ck-f onsubmit="go();return false"><label for=u>${t('user')}</label><input id=u autocomplete=username autocapitalize=off spellcheck=false><label for=p>${t('pass')}</label><input id=p type=password autocomplete=current-password>${m?`<p class=ck-err role=alert>${m}</p>`:''}<button class=ck-btn id=sb type=submit>${t('login')}</button></form>`:''}
+ ${v.btn&&o.state=='ready'?`<div class=ck-sum><label for=sm>${t('sum_l')}</label><textarea id=sm rows=3 maxlength=500 placeholder="${esc(t('sum_ph'))}" oninput="SUM=this.value">${esc(SUM)}</textarea></div>`:''}${v.btn?`<button class=ck-btn id=cb onclick="confirmIt()">${ic('check',24)}<span>${v.btn}</span></button>${v.hint?`<p class=ck-hint>${v.hint}</p>`:''}${o.geo?`<p class=ck-hint style="text-transform:none;letter-spacing:0;font-family:inherit">${t('locnote')}</p>`:''}${m?`<p class=ck-err role=alert>${m}</p>`:''}`:''}
+ ${v.retry?`<button class="ck-btn alt" onclick="load()">${t('retry')}</button>`:''}${o.state=='done'&&o.roll=='lesson'&&o.period?`${o.rollMsg?`<p class=ck-hint style="text-transform:none;letter-spacing:0;font-family:inherit">${esc(o.rollMsg)}</p>`:''}<button class=ck-btn onclick="rollOpen()">${ic('user',24)}<span>${o.rolled?t('rl_edit'):t('rl_btn')}</span></button>`:''}</div></main>
+ ${o.me?`<p class=ck-foot>${t('hi')}, <b>${esc(o.me)}</b> · <a href=# onclick="out();return false">${t('other')} ${t('logout')}</a></p>`:''}`}
+async function go(){const b=$('#sb');b.disabled=true;const r=await post('login',{code:I.code,username:$('#u').value,password:$('#p').value});r.ok?load():(draw(r.s==429?'…':t('bad')))}
+const where=()=>new Promise(ok=>{if(!navigator.geolocation)return ok(null);navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),()=>ok(null),{enableHighAccuracy:true,timeout:20000,maximumAge:0})});
+async function confirmIt(){if(SUM.trim().length<3){draw(t('sum_req'));const f=$('#sm');f&&f.focus();return}const b=$('#cb');if(b){b.disabled=true;b.querySelector('span').textContent=t(I.geo?'locw':'wait')}
+ const g=I.geo?await where():null,r=await post('qr/confirm',{token:TOK,summary:SUM.trim(),...(g||{})});
+ if(r.ok){SUM='';return load()}
+ const e=r.d&&r.d.error;if(e&&e.startsWith('loc_')){await load();return draw(t(e,{m:r.d.m}))}
+ await load(t('err_d'))}
+async function out(){await post('logout',{});load()}
+load();</script></body></html>

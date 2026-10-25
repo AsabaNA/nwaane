@@ -1,0 +1,53 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0c12"><title>Verify</title><link rel="preload" href="/fonts/Sora-700.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css">
+<style>
+/* Redesign step 2 — public report-card verification page (opened on a parent's phone) */
+body.vf-body{margin:0;background:var(--m-paper);color:var(--m-ink);font:400 16px/1.5 var(--m-body)}
+.vf{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:0 16px 32px;box-sizing:border-box}.vf *{box-sizing:border-box}
+.vf-top{width:100%;max-width:520px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.vf-logo{display:flex;align-items:center;gap:10px;font:800 17px var(--m-display)}.vf-logo i{width:11px;height:11px;background:var(--m-brand);transform:rotate(45deg)}
+.vf-lang{display:flex;gap:2px}.vf-lang button{min-width:44px;min-height:44px;margin:0;padding:0 8px;background:none;border:0;border-radius:var(--m-radius);color:var(--m-ink-soft);font:600 13px/1 var(--m-body);letter-spacing:.04em;cursor:pointer}.vf-lang button.on{color:var(--m-ink);box-shadow:inset 0 -2px 0 var(--m-brand)}
+.vf-card{width:100%;max-width:520px;background:var(--m-card);border:1px solid var(--m-border);border-radius:var(--m-radius);padding:32px 24px}
+.vf-eb{display:block;font:600 12px var(--m-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--m-brand)}
+.vf h1{margin:10px 0 8px;font:700 28px/1.15 var(--m-display);color:var(--m-ink)}
+.vf-sub{margin:0;color:var(--m-ink-soft);font-size:15px}
+.vf form{margin-top:24px}.vf label{display:block;margin:0 0 8px;font:600 12.5px var(--m-body);letter-spacing:.04em;text-transform:uppercase;color:var(--m-ink-soft)}
+.vf-row{display:flex;gap:8px}.vf-row input{flex:1;min-width:0;height:52px;padding:0 16px;margin:0;background:var(--m-card);color:var(--m-ink);border:1px solid var(--m-border);border-radius:var(--m-radius);font:600 17px var(--m-mono);letter-spacing:.04em;text-transform:uppercase;outline:0}
+.vf-row input::placeholder{color:var(--m-ink-faint);font-weight:400}.vf-row input:focus{border-color:var(--m-brand);box-shadow:0 0 0 3px rgba(69,90,255,.18)}
+.vf-btn{flex:none;height:52px;min-height:52px;margin:0;padding:0 24px;background:var(--m-brand);color:#fff;border:0;border-radius:var(--m-radius);font:700 15px/1 var(--m-display);cursor:pointer}.vf-btn:hover{background:var(--m-brand-hover)}.vf-btn:disabled{opacity:.6}
+.vf-res{margin-top:24px}
+.vf-ok,.vf-no,.vf-wn{padding:20px;border:1px solid;border-left-width:3px;border-radius:0 var(--m-radius) var(--m-radius) 0}
+.vf-ok{background:#e8f4ec;border-color:#bfe0c9;border-left-color:#1f7a3d}.vf-no{background:#fdeceb;border-color:#f3c3bf;border-left-color:#c62828}.vf-wn{background:#fff4e0;border-color:#f3d9a8;border-left-color:#b45309}
+.vf-st{display:flex;align-items:center;gap:10px;margin:0 0 14px;font:700 18px/1.3 var(--m-display)}.vf-ok .vf-st{color:#1f7a3d}.vf-no .vf-st{color:#c62828}.vf-wn .vf-st{color:#b45309}
+.vf-st svg{flex:none}
+.vf-g{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin:0}.vf-g div{min-width:0}
+.vf-g dt{font:600 11.5px var(--m-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--m-ink-soft)}.vf-g dd{margin:2px 0 0;font:700 16px/1.3 var(--m-body);color:var(--m-ink);overflow-wrap:anywhere}
+.vf-g .w{grid-column:1/-1}
+.vf-chk{margin:16px 0 0;font-size:14px;color:var(--m-ink-soft)}
+.vf-msg{margin:0;font-size:15px;color:var(--m-ink)}
+.vf :focus-visible{outline:2px solid var(--m-brand);outline-offset:2px}
+@media(max-width:420px){.vf-row{flex-direction:column}.vf-btn{width:100%}}@media(max-width:340px){.vf-g{grid-template-columns:1fr}}
+</style></head><body class="vf-body"><div class=vf><div class=vf-top><div class=vf-logo><i aria-hidden=true></i><span id=br></span></div><div class=vf-lang id=lg role=group></div></div>
+<main class=vf-card><span class=vf-eb id=eb></span><h1 id=h></h1><p class=vf-sub id=sub></p>
+<form onsubmit="chk();return false"><label id=l for=c></label><div class=vf-row><input id=c placeholder="RC-XXXX-XXXX / RP-XXXX-XXXX" autocomplete=off autocapitalize=characters spellcheck=false><button class=vf-btn id=b type=submit></button></div></form>
+<div class=vf-res id=r aria-live=polite></div></main></div><script>
+const D={en:{brand:'Meridian',eb:'Public check',h:'Verify a document',sub:'Enter the verification code printed on the report card, the payment receipt or the student ID card.',l:'Verification code',b:'Verify',ok:'Authentic report card',no:'Not found',no_d:'This code is not in the school’s records. Do not accept this document until the school confirms it.',student:'Student',cls:'Class',school:'School',term:'Term',avg:'Term average',rank:'Rank',ann:'Annual average',chk:'Check that these figures match the paper in your hand.',okr:'Authentic receipt',voidr:'Cancelled receipt',voidd:'The school cancelled this receipt. It is no longer valid proof of payment.',rno:'Receipt number',date:'Date',amt:'Amount',stu:'Student (initials)',okb:'Valid student ID card',exb:'Expired student ID card',exbd:'This card belongs to a previous school year.',rb:'Replaced card',rbd:'The school replaced this card (lost or damaged). Do not accept it.',lb:'Not currently enrolled',lbd:'This student is no longer enrolled at the school.',bchk:'Check that the name matches the card in your hand. The photo is not shown here.',many:'Too many attempts. Try later.',wait:'Checking…'},
+fr:{brand:'Meridian',eb:'Vérification publique',h:'Vérifier un document',sub:'Saisissez le code de vérification imprimé sur le bulletin, le reçu de paiement ou la carte d’élève.',l:'Code de vérification',b:'Vérifier',ok:'Bulletin authentique',no:'Introuvable',no_d:'Ce code n’existe pas dans les registres de l’école. N’acceptez pas ce document avant confirmation de l’école.',student:'Élève',cls:'Classe',school:'École',term:'Trimestre',avg:'Moyenne du trimestre',rank:'Rang',ann:'Moyenne annuelle',chk:'Vérifiez que ces chiffres correspondent au document papier.',okr:'Reçu authentique',voidr:'Reçu annulé',voidd:'L’école a annulé ce reçu. Il ne prouve plus le paiement.',rno:'N° du reçu',date:'Date',amt:'Montant',stu:'Élève (initiales)',okb:'Carte d’élève valide',exb:'Carte d’élève expirée',exbd:'Cette carte correspond à une année scolaire passée.',rb:'Carte remplacée',rbd:'L’école a remplacé cette carte (perdue ou abîmée). Ne l’acceptez pas.',lb:'Non inscrit actuellement',lbd:'Cet élève n’est plus inscrit à l’école.',bchk:'Vérifiez que le nom correspond à la carte que vous avez en main. La photo n’est pas affichée ici.',many:'Trop de tentatives. Réessayez plus tard.',wait:'Vérification…'}};
+let L=localStorage.lang||((navigator.language||'').startsWith('fr')?'fr':'en');const $=s=>document.querySelector(s),e=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IC={ok:'<path d="M20 13c0 5-3.5 7.5-7.7 8.9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',no:'<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',wn:'<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'};
+const ic=n=>`<svg width=26 height=26 viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round aria-hidden=true>${IC[n]}</svg>`;
+let last=null;
+function ui(){const t=D[L];$('#br').textContent=t.brand;$('#eb').textContent=t.eb;$('#h').textContent=t.h;$('#sub').textContent=t.sub;$('#l').textContent=t.l;$('#b').textContent=t.b;document.documentElement.lang=L;
+ $('#lg').setAttribute('aria-label',L=='en'?'Language':'Langue');$('#lg').innerHTML=['en','fr'].map(l=>`<button type=button class="${L==l?'on':''}" aria-pressed="${L==l}" onclick="sw('${l}')">${l.toUpperCase()}</button>`).join('')}
+function sw(l){if(l==L)return;L=l;localStorage.lang=L;ui();show()}
+function show(){const t=D[L],r=last;if(!r)return $('#r').innerHTML='';
+ if(r.many)return $('#r').innerHTML=`<div class=vf-wn><p class="vf-st">${ic('wn')}${t.many}</p></div>`;
+ if(!r.found)return $('#r').innerHTML=`<div class=vf-no role=alert><p class=vf-st>${ic('no')}${t.no}</p><p class=vf-msg>${t.no_d}</p></div>`;
+ const d=r.d;if(d.kind=='badge'){const v=d.status=='valid',m={valid:[t.okb,''],expired:[t.exb,t.exbd],replaced:[t.rb,t.rbd],left:[t.lb,t.lbd]}[d.status];return $('#r').innerHTML=`<div class=${v?'vf-ok':'vf-wn'}><p class=vf-st>${ic(v?'ok':'wn')}${m[0]}</p>${m[1]?`<p class=vf-msg>${m[1]}</p>`:''}<dl class=vf-g><div class=w><dt>${t.student}</dt><dd>${e(d.name)}</dd></div><div><dt>${t.cls}</dt><dd>${e(d.cls||'—')}</dd></div><div><dt>${t.school}</dt><dd>${e(d.school)} ${e(d.year)}</dd></div></dl>${v?`<p class=vf-chk>${t.bchk}</p>`:''}</div>`}
+ if(d.kind=='receipt'){const fm=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' '),c=d.void?'vf-wn':'vf-ok';return $('#r').innerHTML=`<div class=${c}><p class=vf-st>${ic(d.void?'wn':'ok')}${d.void?t.voidr:t.okr}</p><dl class=vf-g><div><dt>${t.rno}</dt><dd>${e(d.no)}</dd></div><div><dt>${t.date}</dt><dd>${e(d.date)}</dd></div><div><dt>${t.amt}</dt><dd>${fm(d.amount)} FCFA</dd></div><div><dt>${t.stu}</dt><dd>${e(d.initials)} · ${e(d.cls)}</dd></div><div class=w><dt>${t.school}</dt><dd>${e(d.school)} ${e(d.year)}</dd></div></dl><p class=vf-chk>${d.void?t.voidd:t.chk}</p></div>`}
+ $('#r').innerHTML=`<div class=vf-ok><p class=vf-st>${ic('ok')}${t.ok}</p><dl class=vf-g>
+ <div class=w><dt>${t.student}</dt><dd>${e(d.name)}</dd></div><div><dt>${t.cls}</dt><dd>${e(d.cls)}</dd></div><div><dt>${t.school}</dt><dd>${e(d.school)} ${e(d.year)}</dd></div>
+ <div><dt>${t.term}</dt><dd>${d.term}</dd></div><div><dt>${t.avg}</dt><dd>${d.avg==null?'—':d.avg.toFixed(2)} / 20</dd></div><div><dt>${t.rank}</dt><dd>${d.rank} / ${d.size}</dd></div>${d.annual!=null?`<div><dt>${t.ann}</dt><dd>${d.annual.toFixed(2)} / 20</dd></div>`:''}</dl><p class=vf-chk>${t.chk}</p></div>`}
+async function chk(){const b=$('#b');b.disabled=true;const old=b.textContent;b.textContent=D[L].wait;
+ try{const r=await fetch('/api/verify?code='+encodeURIComponent($('#c').value)),d=await r.json();last=r.status==429?{many:1}:{found:!!d.found,d}}catch{last={many:1}}
+ b.disabled=false;b.textContent=D[L].b;show()}
+ui();const q=new URLSearchParams(location.search).get('code');if(q){$('#c').value=q;chk()}</script></body></html>

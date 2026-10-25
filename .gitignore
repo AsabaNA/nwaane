@@ -1,0 +1,9 @@
+.env
+*.db
+*.db-*
+backups/
+exports/
+node_modules/
+.wrangler
+.wrangler-state
+cloudflare/.dev.vars
