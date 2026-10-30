@@ -30,7 +30,7 @@ enabled = true
 
 [vars]
 NODE_ENV = "production"
-# PUBLIC_URL = "https://app.your-domain.com"   # set once you have your domain: used in QR codes and e-mails
+PUBLIC_URL = "https://school-platform.nwaane.workers.dev/"   
 # BILLING_NAME = "Your company name"          # optional, printed on invoices
 
 [define]                             # pdfkit reads import.meta.url; there is no file system on Workers
