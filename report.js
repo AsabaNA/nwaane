@@ -11,12 +11,14 @@ const mean=a=>{a=a.filter(x=>x!=null);return a.length?a.reduce((x,y)=>x+y)/a.len
 //    computed among those students.
 // Term 3 is the annual card: per subject the three term averages (T1, T2, T3) and their mean (the annual average); the student's annual
 // average is Σ(annual average × coef) / Σ coef over their subjects; rank and class statistics are those of the annual average.
-function compute(sid,cid,term){
+const memo=require('./core/memo');
+function compute(sid,cid,term){return memo(sid,'c:'+cid+':'+term,12e4,()=>compute0(sid,cid,term))}
+function compute0(sid,cid,term){
  const sc=db.prepare('SELECT * FROM schools WHERE id=?').get(sid),all=seqs(sc),
  subs=db.prepare('SELECT id,name,coef FROM subjects WHERE class_id=? AND school_id=? ORDER BY id').all(cid,sid),
  tn=Object.fromEntries(db.prepare("SELECT s.id,u.name FROM subjects s JOIN users u ON u.id=s.teacher_id WHERE s.class_id=?").all(cid).map(x=>[x.id,x.name])),
  sts=db.prepare('SELECT id,name,matricule,sex FROM students WHERE class_id=? AND school_id=? AND active=1 ORDER BY name').all(cid,sid),M={};
- for(const m of db.prepare('SELECT student_id,subject_id,seq,value FROM marks WHERE school_id=? AND subject_id IN(SELECT id FROM subjects WHERE class_id=?)').all(sid,cid))M[m.student_id+':'+m.subject_id+':'+m.seq]=m.value;
+ for(const m of db.prepare('SELECT student_id,subject_id,seq,value FROM marks WHERE subject_id IN(SELECT id FROM subjects WHERE class_id=? AND school_id=?)').all(cid,sid))M[m.student_id+':'+m.subject_id+':'+m.seq]=m.value;
  const annual=term==3,mine=all.filter(q=>q.term==term),inTerm=tm=>all.filter(q=>q.term==tm),get=(st,sj,q)=>M[st+':'+sj+':'+q.id]??null,
  seqAvg=(st,q)=>{let a=0,c=0;for(const s of subs){const v=get(st,s.id,q);if(v!=null){a+=v*s.coef;c+=s.coef}}return c?a/c:null},
  tAvg=(st,tm)=>mean(inTerm(tm).map(q=>seqAvg(st,q))),
@@ -36,6 +38,12 @@ function compute(sid,cid,term){
  out.forEach(o=>o.rows.forEach(r=>{const l=bySubj[r.sid]||[];r.rank=o.has&&r.avg!=null?l.filter(v=>v>r.avg).length+1:null;r.of=l.length}));
  const ta=el.map(o=>o.head).filter(v=>v!=null),stats={avg:mean(ta),high:ta.length?Math.max(...ta):null,low:ta.length?Math.min(...ta):null};
  return{school:sc,annual,seqs:mine,stats,students:out,size:el.length,subjects:subs.length}}
+// headcounts for the overview without the full calculation: active students, and how many of them have a mark in the term (compute(...).size)
+function counts(sid,cid,term){return memo(sid,'n:'+cid+':'+term,12e4,()=>{const qs=seqs(db.prepare('SELECT * FROM schools WHERE id=?').get(sid)).filter(q=>q.term==term).map(q=>"'"+q.id+"'"),
+ ids=db.prepare('SELECT id FROM subjects WHERE class_id=? AND school_id=?').all(cid,sid).map(x=>x.id);
+ if(!qs.length||!ids.length)return{students:db.prepare('SELECT COUNT(*) n FROM students WHERE class_id=? AND school_id=? AND active=1').get(cid,sid).n,size:0};
+ // one probe per student on the marks primary key (student, subject, sequence): stops at the first mark found
+ const r=db.prepare(`SELECT COUNT(*) n,COALESCE(SUM(EXISTS(SELECT 1 FROM marks m WHERE m.student_id=st.id AND m.subject_id IN(${ids.join(',')}) AND m.seq IN(${qs.join(',')}))),0) w FROM students st WHERE st.class_id=? AND st.school_id=? AND st.active=1`).get(cid,sid);return{students:r.n,size:r.w}})}
 const cc=()=>'RC-'+code().slice(0,4)+'-'+code().slice(0,4);
 // Publishing locks the term and gives a card (with a verification code) to every student who has marks in it. Students who registered later,
 // or have no marks in the term, get no card for it; they get theirs when a later term they have marks in is published.
@@ -46,13 +54,14 @@ function publish(sid,cid,term){const c=compute(sid,cid,term),els=c.students.filt
 // [{teacher,phone,items:[{subject,seqs:[n,…]}]}]. upTo limits it to the sequences up to number n (sequences already under way).
 function pending(sid,cid,term,upTo){const qs=seqs(db.prepare('SELECT * FROM schools WHERE id=?').get(sid)).filter(q=>q.term==term&&(upTo==null||q.n<=upTo)),
  subs=db.prepare('SELECT s.id,s.name,s.teacher_id,u.name tname,u.phone tphone FROM subjects s LEFT JOIN users u ON u.id=s.teacher_id WHERE s.class_id=? AND s.school_id=? ORDER BY s.id').all(cid,sid),
- done=new Set(db.prepare('SELECT subject_id||\':\'||seq k FROM mark_sheets WHERE school_id=?').all(sid).map(r=>r.k)),
+ done=new Set(db.prepare('SELECT subject_id||\':\'||seq k FROM mark_sheets WHERE subject_id IN(SELECT id FROM subjects WHERE class_id=?)').all(cid).map(r=>r.k)),
  ov=Object.fromEntries(db.prepare('SELECT q.subject_id||\':\'||q.seq k,u.name,u.phone FROM subject_seq q JOIN users u ON u.id=q.teacher_id WHERE q.subject_id IN(SELECT id FROM subjects WHERE class_id=?)').all(cid).map(r=>[r.k,r])),g=new Map();
  for(const s of subs)for(const q of qs){if(done.has(s.id+':'+q.id))continue;const o=ov[s.id+':'+q.id],who=o?o.name:s.tname||'',ph=o?o.phone:s.tphone||'',k=who+'|'+ph;
   const e=g.get(k)||g.set(k,{teacher:who,phone:ph||'',items:[]}).get(k);let it=e.items.find(x=>x.subject==s.name);if(!it)e.items.push(it={subject:s.name,seqs:[]});it.seqs.push(q.n)}
  return[...g.values()]}
 // avg per student for a basis ('S3' = one sequence, 'T2' = a term); subjectId => that subject's mark only
-function averages(sid,cid,basis,subjectId){const all=seqs(db.prepare('SELECT * FROM schools WHERE id=?').get(sid)),
+function averages(sid,cid,basis,subjectId){return memo(sid,'a:'+cid+':'+basis+':'+(subjectId||0),12e4,()=>averages0(sid,cid,basis,subjectId))}
+function averages0(sid,cid,basis,subjectId){const all=seqs(db.prepare('SELECT * FROM schools WHERE id=?').get(sid)),
  qs=basis[0]=='T'?all.filter(q=>q.term==+basis.slice(1)):all.filter(q=>q.id==basis);if(!qs.length)return{};
  const subs=subjectId?db.prepare('SELECT id,coef FROM subjects WHERE id=?').all(subjectId):db.prepare('SELECT id,coef FROM subjects WHERE class_id=? AND school_id=?').all(cid,sid);if(!subs.length)return{};
  const coef=Object.fromEntries(subs.map(s=>[s.id,subjectId?1:s.coef])),M={};
@@ -72,4 +81,4 @@ function honour(sc,s,lang='both'){if(!sc.hr_on||!s.has||s.head==null)return null
  if(sc.hr_top>0&&!(s.rank&&s.rank<=sc.hr_top))return null;
  if(sc.hr_nofail>0&&s.rows.some(r=>r.avg!=null&&r.avg<sc.hr_nofail))return null;
  const i=T.findIndex(x=>s.head>=x.min);if(i<0)return null;return{level:i+1,of:T.length,min:T[i].min,name:T[i].name||HRDEF[lang]||HRDEF.both}}
-module.exports={hrTiers,honour,HRDEF,seqs,isLocked,compute,publish,pending,averages,defaultBasis,okBasis};
+module.exports={counts,hrTiers,honour,HRDEF,seqs,isLocked,compute,publish,pending,averages,defaultBasis,okBasis};

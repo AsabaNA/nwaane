@@ -18,11 +18,12 @@ I measured what real actions cost on the Cloudflare runtime (`/__admin/stats` sh
 
 | Action | Small school (28 pupils) | Large school (1,105 pupils, 61 staff) |
 |---|---|---|
-| Principal opens the app (home screen) | 5,400 rows read | 270,000 rows read |
-| Teacher opens the app | 1,600 rows read | 31,000 rows read |
+| Principal opens the app (home screen) | 5,400 rows read | 100,000 rows read (was 270,000), about 50,000 when opened again within 10 minutes |
+| Teacher opens the app | 1,600 rows read | 4,600 rows read (was 31,000) |
 | Teacher saves marks for a class of 55 | n/a | 2,600 read, 111 written |
 | Record a fee payment | 260 read, 9 written | 2,400 read, 9 written |
-| Report card PDF for one class | 470 read | 7,600 read |
+| Report card PDF for one class | 470 read | 4,800 read (was 7,600) |
+| Report-card overview (all 21 classes) | n/a | 6,000 rows read (was 55,000), 1,300 when repeated |
 
 Rows read grow roughly with school size, and a normal day has many app opens. Rough guide for the free plan: **a pilot with one to three small or medium schools fits; one large school does not** (its principal and teachers alone read more than 5 million rows on an ordinary day). Writes and requests are not the problem; reads are. Some screens (the principal's dashboard, report-card overview) read far more than they need to and can be made cheaper if you want to stay on the free plan longer.
 
@@ -110,3 +111,6 @@ In Cloudflare's runtime on a local machine: sign-in and sessions, every read scr
 
 ## AI assistant secret
 `wrangler secret put GEMINI_API_KEY` (from the cloudflare folder). The assistant stays off for everybody until the owners' console switch is turned on. No other Cloudflare setting is needed.
+
+## How reads are kept low
+Cloudflare bills every row a query scans, so the heaviest screens were measured statement by statement (the Worker can trace this: send `{"reset":true,"trace":true}` to `/__admin/stats`, then read it again to see the top statements). Changes made: indexes for class headcounts, "which sequences have marks" and gate/timetable lookups; a short per-school cache (`core/memo.js`) for the ranking calculation, class averages and the daily lesson set-up, dropped as soon as any successful write goes through and expiring after 2-5 minutes; the dashboard's school-wide average mark refreshes at most every 10 minutes; the report-card overview counts students with marks directly instead of ranking every class. Results are identical to before (the Node-versus-Worker comparison suites are unchanged).

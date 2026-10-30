@@ -163,7 +163,7 @@ R.post('/announcements',need(['owner']),(req,res)=>{const b=req.body,t=s=>String
 R.post('/announcements/:id/end',need(['owner']),(req,res)=>{db.prepare('UPDATE announcements SET active=0 WHERE id=?').run(+req.params.id);log(req.o,'announcement.end',null,String(req.params.id));res.json({ok:1})});
 // ---- audit (owners only)
 R.get('/audit',need(['owner']),(req,res)=>res.json({valid:chainOk(),rows:db.prepare('SELECT id,at,owner_name,action,school_id,detail FROM owner_audit ORDER BY id DESC LIMIT 300').all().map(r=>({...r,school:r.school_id?(db.prepare('SELECT name FROM schools WHERE id=?').get(r.school_id)||{}).name:''}))}));
-require('./ai').ownerApi(R,{need,log,E});
+require('./ai').ownerApi(R,{need,log,E});require('./referral').ownerApi(R,{need,log,E});
 app.use('/owners/api',express.json(),R);
 app.get('/owners',(req,res)=>res.sendFile(require('path').join(__dirname,'public','owners.html')));
 };

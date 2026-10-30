@@ -56,6 +56,12 @@ CREATE INDEX IF NOT EXISTS i_lessons_date ON lessons(school_id,date);CREATE INDE
 
 // ---- Phase 6a: plans & billing
 for(const c of["modules TEXT DEFAULT 'reports,fees,tracking'","discount_pct INTEGER DEFAULT 0","term_dates TEXT","price_lock_until TEXT"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
+for(const c of["ref_id INTEGER","ref_until TEXT"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
+db.exec(`CREATE TABLE IF NOT EXISTS referrers(id INTEGER PRIMARY KEY,code TEXT UNIQUE NOT NULL,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,phone TEXT DEFAULT '',pw TEXT NOT NULL,email_ok INTEGER DEFAULT 0,active INTEGER DEFAULT 1,created TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS referrer_sessions(token TEXT PRIMARY KEY,referrer_id INTEGER NOT NULL,created TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS referral_earnings(id INTEGER PRIMARY KEY,referrer_id INTEGER NOT NULL,school_id INTEGER NOT NULL,payment_id INTEGER UNIQUE NOT NULL,base INTEGER NOT NULL,amount INTEGER NOT NULL,created TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS referral_payouts(id INTEGER PRIMARY KEY,referrer_id INTEGER NOT NULL,amount INTEGER NOT NULL,method TEXT,ref TEXT,note TEXT,by_name TEXT,created TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS i_schools_ref ON schools(ref_id);CREATE INDEX IF NOT EXISTS i_earn_ref ON referral_earnings(referrer_id)`);
 db.exec(`
 CREATE TABLE IF NOT EXISTS prices(key TEXT PRIMARY KEY,value INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS usage_peak(school_id INTEGER NOT NULL,year INTEGER NOT NULL,term INTEGER NOT NULL,students INTEGER NOT NULL DEFAULT 0,teachers INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(school_id,year,term));
@@ -107,6 +113,9 @@ CREATE TABLE IF NOT EXISTS errors(id INTEGER PRIMARY KEY,at TEXT NOT NULL,route 
 for(const c of db.prepare('SELECT id FROM classes WHERE qr IS NULL').all())db.prepare('UPDATE classes SET qr=? WHERE id=?').run(crypto.randomBytes(12).toString('hex'),c.id);
 const{hash,verify}=require('./pwhash');
 const AL='23456789ABCDEFGHJKLMNPQRSTUVWXYZ',code=()=>Array.from(crypto.randomBytes(6),b=>AL[b%AL.length]).join('');
+// read-cost indexes (rows scanned are what Cloudflare bills): class headcounts, 'which sequences have marks', gate by day
+db.exec('CREATE INDEX IF NOT EXISTS i_students_cls_act ON students(class_id,active);CREATE INDEX IF NOT EXISTS i_marks_school_seq ON marks(school_id,seq);CREATE INDEX IF NOT EXISTS i_gate_day ON gate(school_id,date);CREATE INDEX IF NOT EXISTS i_slots_school ON slots(school_id,day)');
+try{db.exec('ALTER TABLE invoices ADD COLUMN ref_pct INTEGER DEFAULT 0')}catch{}
 module.exports={db,tx,hash,verify,code};
 
 try{db.exec('ALTER TABLE lessons ADD COLUMN summary TEXT')}catch{}

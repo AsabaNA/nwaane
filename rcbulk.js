@@ -41,11 +41,11 @@ module.exports=(app,{auth,E,audit,school})=>{
  const secs=s=>{SECT.ensure(s);return db.prepare('SELECT * FROM sections WHERE school_id=? ORDER BY pos,id').all(s)};
  const classesOf=(s,secId)=>db.prepare('SELECT c.id,c.name,c.section_id,c.head_id,u.name head FROM classes c LEFT JOIN users u ON u.id=c.head_id WHERE c.school_id=? AND c.section_id=? ORDER BY c.name').all(s,secId);
  // one class: everything the overview needs
- function classRow(s,c,term){const k=R.compute(s,c.id,term),pub=R.isLocked(c.id,term),pend=pub?[]:R.pending(s,c.id,term),
+ function classRow(s,c,term){const k=R.counts(s,c.id,term),pub=R.isLocked(c.id,term),pend=pub?[]:R.pending(s,c.id,term),
   missing=pend.reduce((a,g)=>a+g.items.reduce((b,i)=>b+i.seqs.length,0),0),
   held=pub?F.blocked(s,c.id,term).size:0,cards=pub?db.prepare('SELECT COUNT(*) n FROM cards WHERE school_id=? AND class_id=? AND term=?').get(s,c.id,term).n:0;
   const status=pub?'published':!k.size?'nomarks':pend.length?'missing':'ready';
-  return{id:c.id,name:c.name,head:c.head||'',students:k.students.length,with_marks:k.size,status,missing,teachers:pend.map(g=>g.teacher||'').filter((v,i,a)=>a.indexOf(v)==i),held,cards}}
+  return{id:c.id,name:c.name,head:c.head||'',students:k.students,with_marks:k.size,status,missing,teachers:pend.map(g=>g.teacher||'').filter((v,i,a)=>a.indexOf(v)==i),held,cards}}
  app.get('/api/rc/overview',OFF,gate,(req,res)=>{const s=sid(req),sc=school(req),today=SC.clock(sc).date,sl=secs(s),multi=sl.length>1;
   const want=+req.query.term,def=B.termAt(sc,today),term=okT(want)?want:def.term,y=B.schoolYear(today);
   res.json({multi,term,year:y,today,sections:sl.map(sec=>{const now=termNow(sc,sec);return{id:sec.id,name:sec.name,lang:langOfSection(sc,sec),own_lang:sec.card_lang||null,own_cal:!!sec.term_dates,

@@ -7,3 +7,12 @@ node_modules/
 .wrangler
 .wrangler-state
 cloudflare/.dev.vars
+# real school files and local leftovers: never commit these
+exams-data/
+.env.*
+!.env.example
+*.zip
+*.backup*
+.DS_Store
+Thumbs.db
+.vscode/

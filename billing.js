@@ -47,9 +47,9 @@ function draftInvoices(sid){const sc=SC.school(sid),ck=SC.clock(sc),p=priceFor(s
   if(db.prepare('SELECT 1 FROM invoices WHERE school_id=? AND year=? AND term=?').get(sid,t.year,t.term))continue;
   const pk=db.prepare('SELECT students,teachers FROM usage_peak WHERE school_id=? AND year=? AND term=?').get(sid,t.year,t.term);
   if(!pk)continue;                                   // no usage recorded that term: nothing to invoice
-  const pr=price((sc.modules||'reports,fees,tracking').split(','),pk.students,pk.teachers,p,sc.discount_pct||0);
+  const RF=require('./referral'),rf=RF.applies(sc,t.start),pr=price((sc.modules||'reports,fees,tracking').split(','),pk.students,pk.teachers,p,Math.max(sc.discount_pct||0,rf?RF.PCT:0));
   if(pr.amount<=0)continue;
-  db.prepare("INSERT INTO invoices(school_id,year,term,number,modules,students,teachers,lines,gross,discount,amount,status,created) VALUES(?,?,?,?,?,?,?,?,?,?,?,'draft',?)").run(sid,t.year,t.term,invNo(sid,t.year,t.term),sc.modules||'reports,fees,tracking',pk.students,pk.teachers,JSON.stringify(pr.lines),pr.gross,pr.discount,pr.amount,ck.date);made.push(t)}
+  db.prepare("INSERT INTO invoices(school_id,year,term,number,modules,students,teachers,lines,gross,discount,amount,status,created,ref_pct) VALUES(?,?,?,?,?,?,?,?,?,?,?,'draft',?,?)").run(sid,t.year,t.term,invNo(sid,t.year,t.term),sc.modules||'reports,fees,tracking',pk.students,pk.teachers,JSON.stringify(pr.lines),pr.gross,pr.discount,pr.amount,ck.date,rf?RF.PCT:0);made.push(t)}
  return made}
 const paidOf=id=>db.prepare('SELECT COALESCE(SUM(amount),0) a FROM bill_payments WHERE invoice_id=?').get(id).a;
 const creditOf=id=>db.prepare('SELECT COALESCE(SUM(amount),0) a FROM credit_notes WHERE invoice_id=?').get(id).a;
@@ -57,7 +57,8 @@ function sendInvoice(id,by,date){const i=db.prepare('SELECT * FROM invoices WHER
  let due=addDays(date,p.due_days);if(i.term==3){const e=termsOf(sc,i.year)[2].end;if(e>date)due=e}   // Term 3: due at term end
  db.prepare("UPDATE invoices SET status='sent',issued=?,due=? WHERE id=?").run(date,due,id);return db.prepare('SELECT * FROM invoices WHERE id=?').get(id)}
 function recordPayment(id,{amount,date,method='',ref='',by=''}){const i=db.prepare('SELECT * FROM invoices WHERE id=?').get(id);if(!i||i.status=='draft'||i.status=='void')return null;
- const n=db.prepare('SELECT COUNT(*)+1 n FROM bill_payments').get().n;db.prepare('INSERT INTO bill_payments(school_id,invoice_id,amount,date,method,ref,receipt,by_name,at) VALUES(?,?,?,?,?,?,?,?,?)').run(i.school_id,id,amount,date,method,ref,'REC-'+String(n).padStart(5,'0'),by,new Date().toISOString());
+ const n=db.prepare('SELECT COUNT(*)+1 n FROM bill_payments').get().n,pid=db.prepare('INSERT INTO bill_payments(school_id,invoice_id,amount,date,method,ref,receipt,by_name,at) VALUES(?,?,?,?,?,?,?,?,?)').run(i.school_id,id,amount,date,method,ref,'REC-'+String(n).padStart(5,'0'),by,new Date().toISOString()).lastInsertRowid;
+ try{require('./referral').earn(pid)}catch(e){console.error('referral',e.message)}
  if(paidOf(id)+creditOf(id)>=i.amount)db.prepare("UPDATE invoices SET status='paid' WHERE id=?").run(id);return db.prepare('SELECT * FROM invoices WHERE id=?').get(id)}
 // ---- commitment fee: schools that register after Term 1 pay it before they can use the platform (term 0 = not a school term)
 function feeNeeded(sc,date){return termAt(sc,date).term>=2}
@@ -79,7 +80,7 @@ const isReadonly=sid=>status(sid).state=='readonly';
 // what blocks changes: 'pending' (commitment fee unpaid), 'readonly' (invoice overdue) or ''
 const gate=sid=>{const s=status(sid).state;return s=='pending'||s=='readonly'?s:''};
 function overview(sid){const sc=SC.school(sid),ck=SC.clock(sc),p=priceFor(sc),t=termAt(sc,ck.date),pk=touchPeak(sid)||{students:0,teachers:0},mods=(sc.modules||'reports,fees,tracking').split(','),
- est=price(mods,pk.students,pk.teachers,p,sc.discount_pct||0),st=status(sid),fu=(sc.trial_ends||'').slice(0,10),free=t.current&&t.end<=fu;
+ est=price(mods,pk.students,pk.teachers,p,Math.max(sc.discount_pct||0,require('./referral').applies(sc,t.start)?require('./referral').PCT:0)),st=status(sid),fu=(sc.trial_ends||'').slice(0,10),free=t.current&&t.end<=fu;
  const inv=db.prepare("SELECT * FROM invoices WHERE school_id=? AND status!='draft' ORDER BY year DESC,term DESC").all(sid).map(i=>({id:i.id,number:i.number,year:i.year,term:i.term,amount:i.amount,status:i.status,issued:i.issued,due:i.due,paid:paidOf(i.id),owing:i.status=='void'?0:owing(i),students:i.students,teachers:i.teachers,lines:JSON.parse(i.lines||'[]'),discount:i.discount,receipts:db.prepare('SELECT id,receipt,amount,date,method,ref FROM bill_payments WHERE invoice_id=? ORDER BY id').all(i.id)}));
  return{today:ck.date,term:{year:t.year,term:t.term,start:t.start,end:t.end,current:t.current},terms:termsOf(sc,t.year),modules:mods,peak:pk,now:counts(sid,ck.date),estimate:{...est,free},status:st,free_until:fu,discount_pct:sc.discount_pct||0,prices:p,invoices:inv}}
 module.exports={feeInvoice,lockedOut,gate,MODS,P,priceFor,price,termAt,termsOf,schoolYear,freeUntil,touchPeak,touchAll,draftInvoices,sendInvoice,recordPayment,status,isReadonly,overview,counts,paidOf,owing,days,defaultTerms};

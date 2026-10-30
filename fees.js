@@ -3,13 +3,15 @@ const{db,tx,code}=require('./db'),SC=require('./sched'),{PDFDocument,pipe}=requi
 const rcode=()=>'RP-'+code().slice(0,4)+'-'+code().slice(0,4);
 const METHODS=['cash','momo','om','bank','other'];
 // Cumulative rule: a payment counts toward the oldest unpaid term first. Balance through term T = Σ dues up to T − Σ payments.
+db.exec('CREATE TABLE IF NOT EXISTS fee_opening(school_id INTEGER NOT NULL,student_id INTEGER PRIMARY KEY REFERENCES students(id),amount INTEGER NOT NULL,at TEXT)');
 function rows(sid,{class_id=null,q='',id=null}={}){
  const plan={};for(const p of db.prepare('SELECT class_id,term,amount FROM fee_plan WHERE school_id=?').all(sid))(plan[p.class_id]??=[0,0,0])[p.term-1]=p.amount;
  const paid=Object.fromEntries(db.prepare('SELECT student_id,SUM(amount) a FROM payments WHERE school_id=? AND void=0 GROUP BY student_id').all(sid).map(r=>[r.student_id,r.a])),
+ open=Object.fromEntries(db.prepare('SELECT student_id,amount FROM fee_opening WHERE school_id=?').all(sid).map(r=>[r.student_id,r.amount])),
  rel={};for(const r of db.prepare('SELECT student_id,term FROM releases WHERE school_id=?').all(sid))(rel[r.student_id]??=new Set()).add(r.term);
  const f='%'+q+'%';
  return db.prepare('SELECT s.id,s.name,s.matricule,s.guardian,s.phone,s.class_id,s.fee_discount disc,c.name cls,COALESCE(c.short,c.name) cs FROM students s JOIN classes c ON c.id=s.class_id WHERE s.school_id=? AND s.active=1 AND (? IS NULL OR s.class_id=?) AND (? IS NULL OR s.id=?) AND (s.name LIKE ? OR s.matricule LIKE ?) ORDER BY c.name,s.name').all(sid,class_id,class_id,id,id,f,f).map(s=>{
-  const per=(plan[s.class_id]||[0,0,0]).map(a=>a>0?Math.max(0,a-s.disc):0);let c=0;const due=per.map(x=>c+=x),p=paid[s.id]||0;
+  const per=(plan[s.class_id]||[0,0,0]).map(a=>a>0?Math.max(0,a-s.disc):0);per[0]+=open[s.id]||0;let c=0;const due=per.map(x=>c+=x),p=paid[s.id]||0;
   return{...s,per,due,paid:p,bal:due.map(d=>d-p),released:[1,2,3].map(t=>!!rel[s.id]?.has(t))}})}
 const status=(r,term)=>r.due[term-1]==0?'nofee':r.bal[term-1]<=0?'paid':r.paid>0?'partial':'unpaid';
 // students whose report card must be held back (rule = paid only, balance through that term > 0, not released)

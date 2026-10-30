@@ -579,3 +579,33 @@ A chat assistant (button at the bottom right) that answers questions about the s
 **Settings (owners' console)**: model name (default `gemini-3.5-flash-lite`; any model name can be typed, no update needed), questions per user / school / all schools per day, token prices for the cost estimate, *Test connection*.
 Usage is logged as counts and tokens only. Questions and answers are not stored on the server.
 Use a **paid** Gemini key: on the free tier Google may use the data to improve its products.
+
+## Accounting export / import (Sage and Ciel)
+
+Settings → *Accounting (Sage / Ciel)* (principal). One file layout for both packages: CSV, semicolon-separated, UTF-8 with BOM, dates dd/mm/yyyy, FCFA without decimals, columns `Journal;Date;Piece;Compte;Tiers;Libelle;Debit;Credit`, one line per debit and per credit, always balanced.
+
+- **Fee payments received**: debit cash / mobile money / bank, credit the student account (411, matricule as *Tiers*), piece = receipt number.
+- **Fees owed (per term)**: debit student account, credit fees income, dated the first day of the term; includes any imported opening balance in Term 1.
+- **Teacher pay (hours)**: debit payroll expense, credit staff payable, per teacher for a month (needs the tracking module).
+- **Platform subscription invoices**: invoices (debit expense, credit supplier) and payments made.
+- Account numbers and journal codes default to SYSCOHADA values and are editable per school. If a chart of accounts has been imported, saving an account that is not in it asks for confirmation.
+- **Import chart of accounts**: two columns (account, label); replaces the stored chart.
+- **Import opening balances**: student accounts by matricule, as Debit/Credit columns or one balance column. A preview shows matches before anything is saved. Amounts are added to Term 1 fees (replacing an earlier import for the same student); credit balances and other accounts are ignored. They can be removed again.
+- Exports follow the same rules as other statistics: blocked while a Term 3 invoice is unpaid.
+
+## Teacher report cards
+
+Teacher reports (principal menu, complete package only: reports + fees + tracking). A private, informational profile per teacher for a term or the whole year, with a Print / PDF button. It is not a score, there is no ranking or comparison table between teachers, teachers cannot see it and it is not linked to pay.
+
+- **Results, relative to other subjects:** for each subject the teacher teaches, the subject's average is compared with the same students' coefficient-weighted average in their other subjects (points out of 20). A weak class therefore does not count against the teacher, only a subject that lags behind the same students' other subjects. Bands: +1 or more above, between -1 and +1 in line, -1 or less below. Classes with fewer than 8 students are flagged as low confidence. The class average per sequence is shown as the trend.
+- **Presence and duties:** lessons (scheduled, present, late, absent, replaced, not confirmed, covered for colleagues, lessons with a "what was taught" summary), marks (sequence sheets submitted, submitted after report cards were published, not submitted), roll calls (when the school uses them), exam invigilation (assigned, confirmed, missed), gate (days, arrived by day start + 15 min, early departures, back-filled entries).
+- Subjects are those assigned to the teacher (including per-sequence assignments). Opening a profile is written to the school's activity log. Output is blocked while a Term 3 invoice is unpaid, like other statistics.
+
+
+## School sign-up wizard
+The sign-up screen (`public/signup.js`, `public/signup.css`) is a 5-step wizard: School & admin, Packages, Review, Verify email, Done. Package prices come from `GET /api/prices` (the live price table), so owners' price changes show up at once. `POST /api/signup` now accepts `modules` (CSV, stored on the school) and derives the principal's username from the full name when none is sent; it returns `username`. Discount/referral codes are not built yet.
+
+## Referral programme
+- `referral.js`, `public/ref.html` (page at `/ref`): anyone can create a referral account (email verified with a 6-digit code). The dashboard shows their code and link (`/?ref=CODE` opens the school sign-up with the code filled in), referred schools (name, date, status, earned), totals and payouts. Referrers never see a school's email, people or payments.
+- A school that signs up with a code gets 10% off, and the referrer earns 10% of what it pays. The year is 365 days from sign-up: an invoice counts if its term starts inside that year (it is flagged `invoices.ref_pct` when drafted). Commission is booked per payment received (`referral_earnings`) on those invoices only; the commitment fee is excluded. A manual discount set in the owners' console wins if it is higher than 10%.
+- Owners' console, Referrals tab: totals, per-referrer earned/paid/payable, **Record payout** (amount cannot exceed what is payable; MoMo/Orange/bank need a reference; logged in the activity log), and Disable/Enable (owner only). Payouts are made by hand outside the platform.

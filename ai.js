@@ -20,7 +20,7 @@ function flag(u){if(!u||u.support||!ROLES.includes(u.role))return{avail:false,on
  const avail=globalOn()&&!s.ai_block;return{avail,on:avail&&!!s.ai_on}}
 // ---------- data helpers
 const r2=x=>x==null?null:Math.round(x*100)/100;
-function curTerm(sid){const sc=db.prepare('SELECT * FROM schools WHERE id=?').get(sid),all=R.seqs(sc),have=new Set(db.prepare('SELECT DISTINCT seq FROM marks WHERE school_id=?').all(sid).map(x=>x.seq));let t=1;for(const q of all)if(have.has(q.id))t=q.term;return t}
+function curTerm(sid){const sc=db.prepare('SELECT * FROM schools WHERE id=?').get(sid),all=R.seqs(sc),have=new Set(all.filter(q=>db.prepare('SELECT 1 x FROM marks WHERE school_id=? AND seq=? LIMIT 1').get(sid,q.id)).map(q=>q.id));let t=1;for(const q of all)if(have.has(q.id))t=q.term;return t}
 const termOf=(sid,a)=>[1,2,3].includes(+a.term)?+a.term:curTerm(sid);
 const classOf=(sid,a)=>{const v=String(a.class??a.class_name??'').trim();if(!v)return null;const all=db.prepare('SELECT id,name FROM classes WHERE school_id=?').all(sid);
  return all.find(c=>c.name.toLowerCase()==v.toLowerCase())||all.find(c=>c.name.toLowerCase().replace(/\s+/g,'')==v.toLowerCase().replace(/\s+/g,''))||all.find(c=>c.name.toLowerCase().includes(v.toLowerCase()))||null};

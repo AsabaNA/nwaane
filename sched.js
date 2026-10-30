@@ -23,7 +23,8 @@ const HOOK={ensure:null,month:null};   // set by examtt.js (exam suspension and 
 const lockedMonth=(sid,date)=>!!db.prepare('SELECT 1 FROM months WHERE school_id=? AND ym=?').get(sid,ymOf(date));
 const lockedFrom=(sid,date)=>!!db.prepare('SELECT 1 FROM months WHERE school_id=? AND ym>=?').get(sid,ymOf(date));
 // Lessons for a date are created from the timetable that was valid on that date (never rewritten afterwards).
-function ensure(sid,date,sc=school(sid)){if(!schoolDay(sid,sc,date))return;
+function ensure(sid,date,sc=school(sid)){return require('./core/memo')(sid,'ens:'+date,3e5,()=>{ensure0(sid,date,sc);return 1})}   // idempotent; re-run after any write or after 5 minutes
+function ensure0(sid,date,sc){if(!schoolDay(sid,sc,date))return;
  db.prepare('INSERT OR IGNORE INTO lessons(school_id,class_id,date,period,subject_id,sched_id) SELECT school_id,class_id,?,period,subject_id,teacher_id FROM slots WHERE school_id=? AND day=? AND from_date<=? AND (to_date IS NULL OR to_date>=?)').run(date,sid,dow(date),date,date);HOOK.ensure&&HOOK.ensure(sid,date)}
 const effSql="s.from_date<=? AND (s.to_date IS NULL OR s.to_date>=?)";
 const slotsOn=(sid,date,w='',...a)=>db.prepare(`SELECT s.*,c.name cls,b.name subject,u.name teacher FROM slots s JOIN classes c ON c.id=s.class_id JOIN subjects b ON b.id=s.subject_id LEFT JOIN users u ON u.id=s.teacher_id WHERE s.school_id=? AND ${effSql} ${w} ORDER BY s.day,s.period`).all(sid,date,date,...a);

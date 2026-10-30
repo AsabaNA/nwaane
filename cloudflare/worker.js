@@ -48,7 +48,7 @@ export class SchoolDO extends DurableObject {
     } catch (e) { return { error: String(e.message || e) }; }
   }
   async restartNow() { this.ctx.abort('restore'); }
-  async usage(reset) { await this.ready; const st = this.db.stats, out = { ...st, db_bytes: this.db.size() }; if (reset) { st.read = 0; st.written = 0; st.statements = 0; } return out; }
+  async usage(reset, trace) { await this.ready; const st = this.db.stats, out = { read: st.read, written: st.written, statements: st.statements, db_bytes: this.db.size() }; if (st.by) out.top = Object.entries(st.by).sort((a, b) => b[1].rows - a[1].rows).slice(0, 12); if (reset) { st.read = 0; st.written = 0; st.statements = 0; st.by = trace ? {} : null; } return out; }
   async cron() { await this.ready; return this.jobs.runDue(); }
   // moving data in from a local database (cloudflare/move-data.js): one table chunk per call, all inside a transaction
   async importChunk(c) {
@@ -84,7 +84,7 @@ export default {
         try { await s.restartNow(); } catch (e) { /* the object resets itself to finish the restore: an error here is expected */ }
         return Response.json(r);
       }
-      if (p === '/__admin/stats') return Response.json(await s.usage(body.reset));   // rows read/written since the object started (what Cloudflare bills)
+      if (p === '/__admin/stats') return Response.json(await s.usage(body.reset, body.trace));   // rows read/written since the object started (what Cloudflare bills)
       if (p === '/__admin/cron') return Response.json(await s.cron());   // run the due jobs now (same as the scheduled trigger)
       if (p === '/__admin/import') return Response.json(await s.importChunk(body));
       return new Response('Not found', { status: 404 });

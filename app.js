@@ -1,6 +1,6 @@
 const express=require('./core/web'),cookie=()=>(q,s,n)=>n(),crypto=require('crypto'),{db,tx,hash,verify,code}=require('./db');
 const SEC=require('./secure'),app=express();SEC.harden(app);app.use((req,res,next)=>{res.on('error',e=>console.error('response error:',req.path,e.code||e.message));next()});app.use(express.json({limit:'300kb'}),cookie(),express.static('public'));
-const SECT=require('./sections'),B=require('./billing'),BK=require('./backup'),now=()=>new Date().toISOString(),E=(res,s,e)=>res.status(s).json({error:e});
+const REF=require('./referral'),SECT=require('./sections'),B=require('./billing'),BK=require('./backup'),now=()=>new Date().toISOString(),E=(res,s,e)=>res.status(s).json({error:e});
 const audit=(u,a,d='')=>db.prepare('INSERT INTO audit(school_id,user_id,action,detail) VALUES(?,?,?,?)').run(u.school_id,u.id,a,d);
 const LIFE=role=>12*36e5; // everyone signs in again for every new session: the cookie ends when the browser closes, and the server drops it after 12 h
 function session(res,u,role='principal'){const t=crypto.randomBytes(32).toString('hex');db.prepare('INSERT INTO sessions(token,user_id) VALUES(?,?)').run(t,u.id);res.cookie('t',t,SEC.cookieOpts(res,{httpOnly:true,sameSite:'lax'}))}
@@ -22,27 +22,32 @@ const auth=(roles=[],free=false)=>(req,res,next)=>{
  if(!u.support&&!free&&req.method=='GET'&&OUT.test(req.path)&&B.lockedOut(u.school_id))return E(res,402,'locked');   // Term 3 unpaid: no file downloads, no statistics
  req.user=u;next()};
 // outputs withheld while a Term 3 invoice is unpaid (entering data stays open)
-const OUT=/^\/api\/(report(\/pdf|\/share)?|hours(\/pdf)?|fees\/receipt\/pdf|classes\/stats|dashboard|honour\/pdf)$/;
+const OUT=/^\/api\/(report(\/pdf|\/share)?|hours(\/pdf)?|fees\/receipt\/pdf|classes\/stats|dashboard|honour\/pdf|acct\/export|tprofile(\/.*)?)$/;
 const LK=req=>!req.user.support&&B.lockedOut(req.user.school_id);
 const READ_OK=/^\/api\/(report\/publish|logout)$/; // term-end report cards are never blocked
 const TRK=/^\/api\/(structure|closed|unavail|timetable|mytimetable|classes\/qr|qr|today|gate|lesson|spot|hours|rates|myhours)(\/|$)/,FEE=/^\/api\/fees(\/|$)/,ROLL=/^\/api\/(roll|honour)(\/|$)/;
 app.use((req,res,next)=>{const f=FEE.test(req.path)?'fees':TRK.test(req.path)?'tracking':ROLL.test(req.path)?'reports':'';if(!f)return next();
  const u=userOf(req.cookies.t);if(!u)return next();const m=(db.prepare('SELECT modules FROM schools WHERE id=?').get(u.school_id).modules||'reports,fees,tracking').split(',');
  m.includes(f)?next():E(res,403,'module')});
-app.use('/api',(req,res,next)=>{if(req.method!='GET'){const u=userOf(req.cookies.t);if(u)res.on('finish',()=>{if(res.statusCode<300)try{B.touchPeak(u.school_id);BK.countWrite()}catch{}})}next()}); // keep the term's peak counts current
+app.use('/api',(req,res,next)=>{if(req.method!='GET'){const u=userOf(req.cookies.t);if(u)res.on('finish',()=>{if(res.statusCode<300)try{B.touchPeak(u.school_id);BK.countWrite();if(!/^\/api\/(login|logout|auth|ai\/chat|me)/.test(req.path))require('./core/memo').clear(u.school_id)}catch{}})}next()}); // keep the term's peak counts current
 const strong=p=>typeof p=='string'&&p.length>=8;
 // --- schools & login
-app.post('/api/signup',async(req,res)=>{if(SEC.hit('su'+req.ip,10,36e5))return E(res,429,'many');const{school='',name='',username='',password='',phone='',city=''}=req.body,email=String(req.body.email||'').trim().toLowerCase();
- if(!school.trim()||!name.trim()||!username.trim())return E(res,400,'required');if(!A2.okEmail(email))return E(res,400,'email');if(!strong(password))return E(res,400,'pw');
+app.get('/api/prices',(req,res)=>{const p=B.P();res.json(Object.fromEntries(['reports','fees','tracking'].flatMap(m=>['solo','pair','bundle'].map(x=>[m+'_'+x,p[m+'_'+x]??p[m+'_solo']]))))});
+app.post('/api/signup',async(req,res)=>{if(SEC.hit('su'+req.ip,10,36e5))return E(res,429,'many');const{school='',name='',phone='',city=''}=req.body,password=req.body.password||'',email=String(req.body.email||'').trim().toLowerCase();
+ let username=String(req.body.username||'').trim();if(!username)username=String(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/^(mrs?|mme|mr|dr)\.?\s+/,'').replace(/[^a-z0-9]+/g,'.').replace(/^\.|\.$/g,'').slice(0,24)||'admin';
+ const MODS=['reports','fees','tracking'],mods=req.body.modules==null?'reports,fees,tracking':MODS.filter(m=>String(req.body.modules).split(',').includes(m)).join(',');
+ if(!school.trim()||!name.trim()||!mods)return E(res,400,'required');
+ let refId=null;const rc=String(req.body.ref||'').trim();if(rc){const rr=REF.byCode(rc);if(!rr)return E(res,400,'refcode');if(rr.email==email)return E(res,400,'refself');refId=rr.id}if(!A2.okEmail(email))return E(res,400,'email');if(!strong(password))return E(res,400,'pw');
  const u=tx(()=>{let c;do c=code();while(db.prepare('SELECT 1 FROM schools WHERE code=?').get(c));
-  const s=db.prepare('INSERT INTO schools(code,name,trial_ends) VALUES(?,?,?)').run(c,school.trim(),'');
+  const s=db.prepare('INSERT INTO schools(code,name,trial_ends,modules) VALUES(?,?,?,?)').run(c,school.trim(),'',mods);
   db.prepare('UPDATE schools SET trial_ends=? WHERE id=?').run(B.freeUntil(SC.school(s.lastInsertRowid),SC.clock(SC.school(s.lastInsertRowid)).date),s.lastInsertRowid);
   const r=db.prepare('INSERT INTO users(school_id,username,pw,name,role,phone,email,email_ok) VALUES(?,?,?,?,?,?,?,0)').run(s.lastInsertRowid,username.trim(),hash(password),name.trim(),'principal',String(phone).trim().slice(0,30),email);
+  if(refId)db.prepare('UPDATE schools SET ref_id=?,ref_until=? WHERE id=?').run(refId,REF.until(SC.clock(SC.school(s.lastInsertRowid)).date),s.lastInsertRowid);
   db.prepare('UPDATE schools SET city=? WHERE id=?').run(String(city).trim().slice(0,60),s.lastInsertRowid);
   B.feeInvoice(s.lastInsertRowid);
-  return{id:r.lastInsertRowid,school_id:s.lastInsertRowid,code:c}})();
+  return{id:r.lastInsertRowid,school_id:s.lastInsertRowid,code:c,username}})();
  const tk=A2.make({user_id:u.id,kind:'signup'}),sent=await A2.sendCode(A2.get(tk),email,req.body.lang=='fr'?'fr':'en','verify');
- res.json({step:'code',ticket:tk,hint:A2.hint(email),sent:sent=='ok'})});
+ res.json({step:'code',ticket:tk,hint:A2.hint(email),sent:sent=='ok',username:u.username})});
 const attempts={},DUMMY=hash('x'+crypto.randomBytes(8).toString('hex'));
 app.post('/api/login',async(req,res)=>{const{code='',username='',password=''}=req.body,k=req.ip+code.toUpperCase()+username,lang=req.body.lang=='fr'?'fr':'en';
  if((attempts[k]||0)>=5||SEC.hit('lg'+req.ip,60,6e5))return E(res,429,'many');
@@ -299,7 +304,7 @@ app.post('/api/reset',(req,res)=>{if((rl[req.ip]=(rl[req.ip]||0)+1)>10)return E(
  const u=db.prepare('SELECT * FROM users WHERE id=?').get(r.user_id);audit(u,'password.reset');res.json({ok:1,code:db.prepare('SELECT code FROM schools WHERE id=?').get(u.school_id).code,username:u.username})});
 app.get('/api/announcements',auth([],true),(req,res)=>{const d=now().slice(0,10);res.json(db.prepare('SELECT id,title_en,body_en,title_fr,body_fr,level FROM announcements WHERE active=1 AND starts<=? AND ends>=? ORDER BY id DESC').all(d,d))});
 require('./core/jobs').every('backup-tick',36e5,BK.tick,5000);
-require('./owners')(app);require('./ai')(app,{auth,E,audit:(u,a,d)=>audit(u,a,d)});
+require('./owners')(app);REF(app);require('./ai')(app,{auth,E,audit:(u,a,d)=>audit(u,a,d)});
 const SCx=0;require('./phase4')(app,{auth,userOf,E,audit,school,tx,isGate});
 require('./dash')(app,{auth,school});
 require('./roll')(app,{auth,E,audit,school});
@@ -319,6 +324,6 @@ require('./mydata')(app,{auth,E,audit,school});
 require('./search')(app,{auth});
 app.get('/api/palette',auth(),(req,res)=>res.json(require('./ttpal').payload(req.user.school_id)));
 require('./exam')(app,{auth,E,audit,school});
-const F=require('./fees');F(app,{auth,E,audit,school});
+const F=require('./fees');F(app,{auth,E,audit,school});require('./acct')(app,{auth,E,audit});require('./tprofile')(app,{auth,E,audit,school});
 app.use((e,req,res,next)=>/UNIQUE/.test(e.message)?E(res,409,'dup'):(console.error(e),BK.logError(req.path,e),E(res,500,'server')));
 module.exports=app;
