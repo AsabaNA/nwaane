@@ -36,23 +36,21 @@ const SXCONTROLS=[
  SXC('dashboard','d_next','Lessons happening now and next','Cours en ce moment et à venir','now next lessons maintenant prochain','[onclick^="dashF(\'next\')"]'),
  SXC('dashboard','d_verify','Verify a report card','Vérifier un bulletin','verify authenticity check verifier authentique qr','a[href*="verify"]'),
  // ---- register a student
- SXC('register','r_photo','Choose a photo for the student','Choisir une photo de l’élève','photo picture image camera upload photo identite','#phb_reg'),
- SXC('register','r_import','Import students from a file','Importer des élèves depuis un fichier','import excel csv upload fichier liste many bulk tableau','[onclick^="impOpen"]'),
  // ---- report cards
  SXC('reports','rp_t1','Report cards, term 1','Bulletins, trimestre 1','term trimestre first premier','[onclick^="rcTerm(\'1\')"]'),
  SXC('reports','rp_t2','Report cards, term 2','Bulletins, trimestre 2','term trimestre second deuxieme','[onclick^="rcTerm(\'2\')"]'),
  SXC('reports','rp_t3','Report cards, term 3','Bulletins, trimestre 3','term trimestre third troisieme','[onclick^="rcTerm(\'3\')"]'),
  SXC('reports','rp_print','Print report cards','Imprimer les bulletins','print bulletins cards pdf imprimer sections classes duplex','[onclick^="rcPrintOpen(RCS"]'),
  // ---- fees
- SXC('fees','f_collect','Payments and receipts list','Liste des paiements','payments paiements collect encaisser receipts recus','[onclick^="vFees(\'collect\')"]',{r:['principal']}),
- SXC('fees','f_setup','Set the school fees','Définir les frais de scolarité','fee setup frais amount montant tranche installment prices','[onclick^="vFees(\'setup\')"]',{r:['principal']}),
+ SXC('fees','f_collect','Payments and receipts list','Liste des paiements','payments paiements collect encaisser receipts recus','.pgt [data-t="pay"]',{r:['principal'],doc:1}),
+ SXC('fees','f_setup','Set the school fees','Définir les frais de scolarité','fee setup frais amount montant tranche installment prices','.pgt [data-t="setup"]',{r:['principal'],doc:1}),
  SXC('fees','f_owing','Students who still owe fees','Élèves qui doivent encore des frais','owing arrears debt unpaid impaye retard balance solde devoir','[onclick^="feStat(\'owing\')"]'),
  SXC('fees','f_paid','Students who have fully paid','Élèves ayant tout payé','paid solde complete fully','[onclick^="feStat(\'paid\')"]'),
  SXC('fees','f_partial','Students who paid part of the fees','Élèves ayant payé en partie','partial partly partiel installment tranche','[onclick^="feStat(\'partial\')"]'),
  SXC('fees','f_unpaid','Students who have not paid at all','Élèves n’ayant rien payé','unpaid not paid nothing rien impaye','[onclick^="feStat(\'unpaid\')"]'),
  SXC('fees','f_print','Print the fees list','Imprimer la liste des frais','print list liste imprimer owing arrears','[onclick^="fePrint"]'),
  // ---- record a payment
- SXC('recpay','p_find','Find a student to record a payment','Trouver un élève pour enregistrer un paiement','find search student name matricule trouver chercher','#rpq'),
+ SXC('fees','p_pay','Pay fees: record a payment','Payer les frais : enregistrer un paiement','pay fees record payment receipt encaisser paiement payer frais recu','.pgt .pay-btn',{r:['principal','secretary'],doc:1}),
  // ---- subjects
  SXC('subjects','s_add','Add a subject to a class','Ajouter une matière à une classe','add subject coefficient new matiere nouvelle','[onclick*="#sn"]'),
  SXC('subjects','s_edit','Edit a subject (name, coefficient)','Modifier une matière (nom, coefficient)','edit rename coefficient modifier matiere','[onclick^="sbEdit"]'),
@@ -62,7 +60,8 @@ const SXCONTROLS=[
  SXC('classes','c_idall','Print student ID cards','Imprimer les cartes d’élève','id cards badges students photos cartes eleves badge','[onclick^="idOpen()"]'),
  SXC('classes','c_qrall','Print the QR codes of all classes','Imprimer les codes QR de toutes les classes','qr codes class scan attendance appel','a[href*="/api/qr/pdf"]',{r:['principal','secretary'],opt:true}),
  SXC('classes','c_add','Add a class','Ajouter une classe','add class new create classe nouvelle creer','[onclick*="#cp"]',{r:['principal']}),
- SXC('classes','c_import','Import students from a spreadsheet','Importer des élèves depuis un tableur','import excel csv upload spreadsheet tableur fichier','[onclick^="impOpen"]',{r:['principal']}),
+ SXC('classes','c_register','Register a student','Inscrire un élève','register add new student enrol enroll inscrire eleve inscription','[onclick^="regOpen"]',{r:['principal','secretary']}),
+ SXC('classes','c_import','Import students from a spreadsheet','Importer des élèves depuis un tableur','import excel csv upload spreadsheet tableur fichier','[onclick^="impOpen"]',{r:['principal','secretary']}),
  SXC('classes','c_menu','Print one class: list, ID badges, QR code','Imprimer une classe : liste, badges, code QR','class list badges qr print classe liste imprimer','[onclick^="kcMenu"]',{r:['principal'],hint:{en:'Open the ⋯ menu on the class',fr:'Ouvrez le menu ⋯ de la classe'}}),
  SXC('classes','c_sections','Set up sections (English, French, …)','Créer des sections (anglophone, francophone…)','sections anglophone francophone subsystem sous-systeme primary primaire','[onclick^="scAddOpen"]',{r:['principal'],opt:true}),
  // ---- staff

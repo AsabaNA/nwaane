@@ -34,7 +34,7 @@ const landing=()=>{const g=navGroups();return g.length?g[0][1][0][1]:''};
 function initials(n){const w=String(n||'').trim().split(/\s+/).filter(x=>x&&!/\.$/.test(x));return(w.slice(0,2).map(x=>x[0]).join('')||'?').toUpperCase()}
 const fcol=()=>{try{return localStorage.frcol=='1'}catch{return false}};
 function frameHTML(){const groups=S.active?navGroups():[],col=fcol();
- const nav=groups.map(([g,items])=>`<div class=fr-grp><p class=fr-gl>${t(g)}</p>${items.map(([k,f])=>`<a href=# class=fr-it data-f="${f}" data-k="${k}" title="${esc(t(k))}" onclick="frGo('${f}');return false">${fi(FICON[k]||'list')}<span>${t(k)}</span></a>`).join('')}</div>`).join('');
+ const nav=groups.map(([g,items])=>`<div class="fr-grp${g[0]=='_'?' nl':''}">${g[0]=='_'?'':`<p class=fr-gl>${t(g)}</p>`}${items.map(([k,f])=>`<a href=# class=fr-it data-f="${f}" data-k="${k}" title="${esc(t(k))}" onclick="frGo('${f}');return false">${fi(FICON[k]||'list')}<span>${t(k)}</span></a>`).join('')}</div>`).join('');
  return`<div class="fr${col?' col':''}" id=frame><a class=fr-skip href="#m">${t('fr_main')}</a>
  <aside class=fr-side id=frs aria-label="${t('fr_main')}"><div class=fr-top><div class=au-logo><span aria-hidden=true></span><b class=fr-hide>${t('brand')}</b></div>
   <button type=button class="fr-ic fr-colb" onclick="frCol()" aria-label="${t(col?'fr_expand':'fr_collapse')}" title="${t(col?'fr_expand':'fr_collapse')}">${fi('left',18)}</button>
@@ -47,7 +47,7 @@ function frameHTML(){const groups=S.active?navGroups():[],col=fcol();
   <div class=fr-crumb><span class=fr-sch>${esc(S.school)}</span><span class=fr-sep aria-hidden=true>/</span><b id=frcur></b></div>
   <div class=fr-lang role=group aria-label="${t('fr_lang')}">${['en','fr'].map(l=>`<button type=button class="${L==l?'on':''}" aria-pressed="${L==l}" onclick="if(L!='${l}')sw()">${l.toUpperCase()}</button>`).join('')}</div>
   <span class="fr-av fr-avt" title="${esc(S.name)}" aria-hidden=true>${esc(initials(S.name))}</span></header>
- ${demoBar()}<nav id=bcb class="bcb noprint" aria-label="Breadcrumb"></nav><main id=m class=fr-content tabindex=-1></main></div></div>`}
+ ${demoBar()}<nav id=bcb class="bcb noprint" aria-label="Breadcrumb"></nav><div id=pgtabs class="fr-content pgt noprint"></div><main id=m class=fr-content tabindex=-1></main></div></div>`}
 function frDrawer(on){const f=$('#frame');if(!f)return;f.classList.toggle('open',!!on);const b=$('#frmb');if(b)b.setAttribute('aria-expanded',!!on);
  if(on){const a=$('#frs .fr-it[aria-current]')||$('#frs .fr-it');a&&a.focus()}else if(b&&matchMedia('(max-width:1023px)').matches)b.focus()}
 function frCol(){const f=$('#frame');if(!f)return;const c=f.classList.toggle('col');try{localStorage.frcol=c?'1':'0'}catch{}

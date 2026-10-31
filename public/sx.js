@@ -92,7 +92,7 @@ async function sxAct(i,act,ev){if(ev&&ev.target.closest('.sx-a'))return;const e=
  }catch(x){console.error(x)}}
 // ---- a button: open its page, wait for it, make it glow until it is clicked
 const sxSleep=ms=>new Promise(r=>setTimeout(r,ms));
-function sxFind(c){const root=c.pg===null?document:$('#m');if(!root)return null;try{return[...root.querySelectorAll(c.sel)].find(el=>el.getClientRects().length)||null}catch{return null}}
+function sxFind(c){const root=(c.pg===null||c.doc)?document:$('#m');if(!root)return null;try{return[...root.querySelectorAll(c.sel)].find(el=>el.getClientRects().length)||null}catch{return null}}
 async function sxRun(c){sxStop();
  if(c.pg){const it=sxMenu(c.pg);if(!it)return sxToast(t('sx_gone'));if(VIEWNOW!=it[1]||c.pre)await frGo(it[1]);if(c.pre){try{await c.pre()}catch{}}}
  if(c.pg===null&&matchMedia('(max-width:1023px)').matches&&/fr-(user|colb)/.test(c.sel))frDrawer(1);

@@ -1214,15 +1214,13 @@ body.tw-selmode .tw-cell.dd:not(.free){cursor:cell}
 .imp-nw{display:flex;gap:6px;flex:1 1 100%}.imp-nw[hidden]{display:none}.imp-nw input{flex:1 1 150px;min-width:0}.imp-nw .imp-sh{flex:0 1 100px}
 .imp-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e8f0fe;color:#1a56b0;white-space:nowrap}.imp-tag.ask{background:#fff3d6;color:#9a5b00}.imp-tag.new{background:#e3f6e8;color:#1b6b34}
 .imp-u select{border-color:#e0a100;box-shadow:0 0 0 2px #fff3d6}
-/* classes and students toolbar: search, then Add class / Import / Print on ONE line (mobile mockup) */
-.pr-m{display:none!important}.fr-content .tb-a{display:contents}
+/* classes and students toolbar: search, then Add class / Import / Print / Register (one line on mobile) */
+.fr-content .tb-a{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 @media(max-width:700px){
  .fr-content .tb .srch{flex:1 1 100%;min-width:0}
- .fr-content .tb .tb-a{display:flex;flex:1 1 100%;gap:8px;flex-wrap:nowrap}
- .fr-content .tb .tb-a>*{flex:1 1 0;min-width:0;margin:0;min-height:46px;padding:0 8px;font-size:14px;font-weight:600;white-space:nowrap;justify-content:center;border-radius:12px}
- .fr-content .tb .tb-a>.pr-d{display:none!important}
- .fr-content .tb .tb-a>.pr-m{display:inline-flex!important;flex:0 0 auto;padding:0 14px}
- .fr-content .tb .tb-a>.add-m{order:1}.fr-content .tb .tb-a>.imp-m{order:2}.fr-content .tb .tb-a>.pr-m{order:3}
+ .fr-content .tb .tb-a{flex:1 1 100%;gap:6px;flex-wrap:nowrap}
+ .fr-content .tb .tb-a>*{flex:1 1 auto;min-width:0;margin:0;min-height:46px;padding:0 6px;font-size:14px;font-weight:600;white-space:nowrap;justify-content:center;border-radius:12px}
+ .fr-content .tb .tb-a>* svg{display:none}
  .sc-hint{padding:12px;gap:8px}.sc-hint h2{font-size:15px;margin:0 0 2px}.sc-hint p{font-size:13px;line-height:1.4}.sc-ha button{min-height:40px;font-size:14px;padding:0 14px}
 }
 .ovl.prs .ovc .grab{display:none}
@@ -1230,3 +1228,16 @@ body.tw-selmode .tw-cell.dd:not(.free){cursor:cell}
 .ovl.prs .ovc button.item:first-of-type{border-top:0}.ovl.prs .ovc button.item span{display:block}.ovl.prs .ovc button.item b{display:block;font-size:15px}.ovl.prs .ovc button.item small{display:block;color:var(--m-ink-soft);font-size:12px}
 @media(max-width:700px){.ovl.prs{align-items:flex-end;padding:0}.ovl.prs .ovc{border-radius:20px 20px 0 0;max-width:none;padding-bottom:24px}.ovl.prs .ovc .grab{display:block;width:40px;height:4px;background:#ddd;border-radius:4px;margin:0 auto 12px}}
 .l-m{display:none}@media(max-width:700px){.l-d{display:none}.l-m{display:inline}}
+.rgd{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}.rgd>div{min-width:0}.rgd .rgw{grid-column:1/-1}.rgd input,.rgd select{width:100%}.rgd .rn{background:var(--m-info-bg,#eef0ff);border-radius:10px;padding:10px 12px;font-size:14px}.rgd .fa{margin-top:10px}
+@media(max-width:700px){.rgd{grid-template-columns:1fr}}
+.gl li[hidden],.gs-none[hidden]{display:none!important}.gsr{display:block;position:relative;margin:0 0 10px;text-transform:none;letter-spacing:0}.gsr svg{position:absolute;left:14px;top:15px;color:var(--m-ink-faint,#8a90a2)}.gsr input{width:100%;max-width:none;padding-left:42px}
+.ovc fieldset.sc-mv{border:0;padding:0;margin:10px 0 4px;min-width:0;display:grid;gap:8px}.sc-mv .rad{align-items:center;margin:0}.sc-mv .rad span{font-weight:600}
+
+/* tabbed pages (Finance, Academics): the tab bar sits above #m */
+.fr-side .fr-grp.nl{border-top:1px solid rgba(255,255,255,.09);margin-top:8px;padding-top:8px}.fr-side .fr-grp.nl:first-child{border-top:0;margin-top:0;padding-top:0}
+#pgtabs:empty{display:none}#pgtabs.fr-content{padding-bottom:0;padding-top:24px}
+.pgt-row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:10px 0 0}.pgt-seg{max-width:100%;overflow-x:auto}.pgt-row .pay-btn{margin:0 0 0 auto;min-height:46px;padding:0 18px}
+body.pgtd #m h1{display:none}body.pgtd #m{padding-top:14px}
+@media(max-width:700px){#pgtabs.fr-content{padding-top:16px}.pgt-row .pay-btn{margin:0;flex:1 1 100%}}
+@media print{#pgtabs{display:none}}
+.ovc.payc{max-width:760px}

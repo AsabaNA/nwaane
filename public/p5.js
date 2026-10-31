@@ -20,9 +20,9 @@ fs_naz:'Nom : A–Z',fs_nza:'Nom : Z–A',fs_cls:'Classe',fs_bhi:'Solde : le plu
 pr_all:'Registre des paiements des élèves',pr_owing:'Élèves qui doivent encore',pr_paid:'Élèves ayant tout payé',pr_partial:'Élèves partiellement payés',pr_unpaid:'Élèves n’ayant rien payé'});
 const fm5=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 let FE={tab:'collect',term:1,cid:0,q:'',status:'all',sid:0,page:1,st:{k:'name',d:1},data:null};
-function vFees(tab){if(tab)FE.tab=tab;const adm=S.role=='principal',tabs=[['collect','f_collect'],...(adm?[['setup','f_setup']]:[])];
+function vFees(tab){if(tab)FE.tab=tab;if(window.pgBar)pgBar('vFees');const adm=S.role=='principal',tabs=[['collect','f_collect'],...(adm?[['setup','f_setup']]:[])];
  const pills=FE.tab=='collect'?pillRow([1,2,3].map(i=>({id:i,name:t('f_term')+' '+i})),FE.term,'feTerm'):'';
- $('#m').innerHTML=`${lHead(t('fees'),t('f_sub'),pills)}${tabs.length>1?`<div class=noprint>${seg(tabs.map(([k,l])=>[k,t(l)]),FE.tab,'vFees')}</div>`:''}<div id=ff></div>`;return{collect:feCollect,setup:feSetup}[FE.tab]()}
+ $('#m').innerHTML=`${lHead(t('fees'),t('f_sub'),pills)}<div id=ff></div>`;return{collect:feCollect,setup:feSetup}[FE.tab]()}
 const stCls=s=>s=='paid'?'g':s=='nofee'?'':'r';
 const stChip=s=>`<span class="chip ${s=='paid'?'ok':s=='partial'?'warn':s=='unpaid'?'bad':''}">${s=='paid'?fi('check',14):s=='nofee'?'':fi('clock',14)}${t('f_s_'+s)}</span>`;
 window.feTerm=i=>{FE.term=+i;FE.page=1;vFees()};
@@ -95,7 +95,7 @@ async function feDisc(id){const r=await api('fees/discount',{student_id:id,amoun
 async function feRel(id,term,on){let reason='';if(on){reason=prompt(t('f_relq'));if(!reason)return feStudent(id)}const r=await api('fees/release',{student_id:id,term,on,reason});if(!r.ok)alert(em(r.s,r.d.error));feStudent(id)}
 // ---- setup (principal)
 async function feSetup(){const p=(await api('fees/plan')).d;
- $('#ff').innerHTML=`<h2>${t('f_plan')}</h2><div style="overflow-x:auto"><table><tr><th>${t('f_cls')}<th>${t('f_term')} 1<th>${t('f_term')} 2<th>${t('f_term')} 3<th>${p.classes.map(c=>`<tr><td>${esc(c.name)}${c.t.map((a,i)=>`<td><input type=number min=0 id=fp${c.id}_${i} value=${a} style="min-height:40px;width:110px">`).join('')}<td><button class=sb onclick="feSavePlan(${c.id})">${t('f_save')}</button>`).join('')}<tr><td><b>${t('f_planall')}</b>${[0,1,2].map(i=>`<td><input type=number min=0 id=fp0_${i} style="min-height:40px;width:110px">`).join('')}<td><button class=sb onclick="feSavePlan(0)">${t('f_save')}</button></table></div><div id=res></div>
+ $('#ff').innerHTML=`<h2>${t('f_plan')}</h2><div style="overflow-x:auto"><table><tr><th>${t('f_cls')}<th>${t('f_term')} 1<th>${t('f_term')} 2<th>${t('f_term')} 3<th><tr class=fe-all><td><b>${t('f_planall')}</b>${[0,1,2].map(i=>`<td><input type=number min=0 id=fp0_${i} style="min-height:40px;width:110px">`).join('')}<td><button class=sb onclick="feSavePlan(0)">${t('f_save')}</button>${p.classes.map(c=>`<tr><td>${esc(c.name)}${c.t.map((a,i)=>`<td><input type=number min=0 id=fp${c.id}_${i} value=${a} style="min-height:40px;width:110px">`).join('')}<td><button class=sb onclick="feSavePlan(${c.id})">${t('f_save')}</button>`).join('')}</table></div><div id=res></div>
  <h2>${t('f_rule')}</h2><select id=fru ${IS} onchange="feRule(this.value)"><option value=all ${p.rule=='all'?'selected':''}>${t('f_rule_all')}<option value=paid ${p.rule=='paid'?'selected':''}>${t('f_rule_paid')}</select><p><small>${t('f_ruleh')}</small></p>
  <h2>${t('rc_paper')}</h2><select id=rcw ${IS} onchange="feRw(this.value)"><option value=80 ${p.rw==80?'selected':''}>${t('rc_p80')}<option value=58 ${p.rw==58?'selected':''}>${t('rc_p58')}</select><p><small>${t('rc_paperh')}</small></p><p id=rcs class=ok></p>`}
 async function feSavePlan(id){const a=[0,1,2].map(i=>$('#fp'+id+'_'+i).value);if(a.some(x=>x===''))return;const r=await api('fees/plan',{class_id:id||undefined,all:!id,amounts:a.map(Number)});r.ok?feSetup():$('#res').innerHTML=`<p class="box bad">${em(r.s,r.d.error)}</p>`}

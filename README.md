@@ -619,3 +619,15 @@ The sign-up screen (`public/signup.js`, `public/signup.css`) is a 5-step wizard:
 
 ## Classes and students on mobile
 Below 700px the toolbar is the search box on its own line, then **Add class**, **Import** and **Print** side by side on one line. Print opens a bottom sheet with Whole school list, QR codes and ID cards (QR codes for the principal; ID cards for principal and secretary). Desktop keeps the full buttons. Code: `lists.js` (`clPrintSheet`), styles at the end of `style.css`.
+
+## Classes page: Register dialog, Add to section, Teacher attendance
+- **Register a student** is no longer a sidebar page. It is a button on Classes and students (principal and secretary) that opens a dialog (`regOpen` in `index.html`). The dialog stays open after each student so several can be entered in a row. The dashboard quick action opens the same dialog.
+- **Toolbar** (desktop and mobile, one line): Add class (principal), Import students (principal and secretary), Print, Register a student. Print opens a pop-up with Whole school list, QR codes and ID cards. The same buttons (without Add class) also show on the sections overview.
+- **Add to section** is in the three-dot menu of every class card (principal). With several sections it lists them plus "Create a new section". With one section it asks for a name for the current section and the new one, then moves the class into the new one (`scMoveOpen` in `sect.js`).
+- **Today** is now **Teacher attendance**. The gate list has a search box (`tdFind` in `p4.js`).
+
+## Sidebar, Finance and Academics (office roles)
+- **Sidebar** (principal and secretary): Dashboard / Staff, Teacher attendance / Classes and students, Academics, Timetable (Roll call after it when switched on) / Finance, My Plan / Settings. No group labels; thin dividers between groups. Teachers and the surveillant keep their own menus. Code: `pages.js` (`navGroups`).
+- **Finance** = Payments | Fee setup | Hours & pay, with a **Pay fees** button beside the tabs that opens Record payment in a pop-up (`payOpen`). Fee setup and Hours & pay are principal only; the secretary sees Payments. "Same for every class" is the first row of Fee setup. The old Record payment page opens the same pop-up over Payments, so search results and old links still work.
+- **Academics** = Student report cards | Teacher report cards | Exams. On the Exams tab a **Create exam timetable** button (principal) opens the wizard of the Timetable page's Exam timetable tab. Teacher report cards still need the complete package.
+- The tab bar lives in `#pgtabs`, above the page, so the old views (`vFees`, `vHours`, `vReports`, `vTprof`, `vExams`) are unchanged and re-render freely. Their own page titles are hidden while a tab bar is shown.

@@ -27,7 +27,7 @@ secF=a=>CLS&&CLS.sec?a.filter(k=>k.section_id==CLS.sec):a;
  else if(!scMulti()&&S.role=='principal'&&!CLS.open)scHint()}}
 function scBack(){CLS.sec=0;CLS.open=0;LS={};vClasses()}
 function scPage(){const adm=S.role=='principal';
- $('#m').innerHTML=`<div class=ph><h1>${t('classes')}</h1><p>${t('sc_sub')}</p></div><div class=sc-g>${SCT.sections.map(x=>`<article class="cc xp sc-c" tabindex=0 role=button onclick="scOpen(${x.id})" onkeydown="if(event.key=='Enter')scOpen(${x.id})"><div class=cc-h><h2>${esc(x.name)}${adm?`<button type=button class="ib cc-e noprint" onclick="event.stopPropagation();scRename(${x.id})" aria-label="${t('sc_ren')}" title="${t('sc_ren')}">${fi('pencil',16)}</button>`:''}</h2></div>
+ $('#m').innerHTML=`<div class=ph><h1>${t('classes')}</h1><p>${t('sc_sub')}</p></div><div class="tb noprint">${clBtns(false)}</div><div class=sc-g>${SCT.sections.map(x=>`<article class="cc xp sc-c" tabindex=0 role=button onclick="scOpen(${x.id})" onkeydown="if(event.key=='Enter')scOpen(${x.id})"><div class=cc-h><h2>${esc(x.name)}${adm?`<button type=button class="ib cc-e noprint" onclick="event.stopPropagation();scRename(${x.id})" aria-label="${t('sc_ren')}" title="${t('sc_ren')}">${fi('pencil',16)}</button>`:''}</h2></div>
   <p class=sc-n><b>${scN(x.classes,'cls')}</b><span>${scN(x.students,'stu')}</span><span>${scN(x.teachers,'tea')}</span></p>${adm&&!x.classes?`<p class=cc-q onclick="event.stopPropagation()"><button type=button class=lk onclick="scDel(${x.id})">${t('sc_del')}</button></p>`:''}<p class=cc-go>${t('sc_open')} ${fi('arrow',16)}</p></article>`).join('')}
   ${adm?`<button type=button class="sc-c sc-new" onclick="scAddOpen()"><span>${fi('plus',28)}</span><b>${t('sc_add')}</b><small>${t('sc_addh')}</small></button>`:''}</div>`}
 function scOpen(id){CLS.sec=id;CLS.open=0;LS={};vClasses()}
@@ -49,9 +49,22 @@ async function scDel(id){if(!confirm(t('sc_delq')))return;const x=await fetch('/
 function secField(cur,id='ce_sec'){if(!scMulti()||S.role!='principal')return'';const l=SCT.sections||[];cur=cur||CLS.sec||(l[0]||{}).id;
  return`<label for=${id}>${t('sc_cl_in')}</label><select id=${id}>${l.map(x=>`<option value=${x.id} ${x.id==cur?'selected':''}>${esc(x.name)}`).join('')}</select>`}
 // registration: choose the section, then a class in it
-{const o=vAdd;vAdd=async function(){await o();if(!scMulti()||!$('#c'))return;await scLoad();const cs=(await api('classes')).d,sel=$('#c'),wrap=sel.parentElement,sc=SCT.sections;
+async function scRegDecorate(){if(!scMulti()||!$('#c'))return;await scLoad();const cs=(await api('classes')).d,sel=$('#c'),wrap=sel.parentElement,sc=SCT.sections;
  const draw=()=>{const sid=+($('#c_sec')||{}).value||sc[0].id;sel.innerHTML=`<option value="">${t('reg_pickc')}`+cs.filter(k=>k.section_id==sid).map(k=>`<option value=${k.id}>${esc(k.name)}`).join('')};
- wrap.insertAdjacentHTML('beforebegin',`<div><label for=c_sec>${t('sc_pick')} *</label><select id=c_sec>${sc.map(x=>`<option value=${x.id}>${esc(x.name)}`).join('')}</select></div>`);$('#c_sec').onchange=draw;draw()}}
+ wrap.insertAdjacentHTML('beforebegin',`<div><label for=c_sec>${t('sc_pick')} *</label><select id=c_sec>${sc.map(x=>`<option value=${x.id}>${esc(x.name)}`).join('')}</select></div>`);$('#c_sec').onchange=draw;draw()}
+// "Add to section" from the class card menu: pick a section for this class, or create one (also when the school has only one section so far)
+Object.assign(D.en,{sc_move:'Add to section',sc_move_h:'Add to section',sc_move_for:'Class: [c]',sc_move_new:'Create a new section',sc_move_cur:'current',sc_move_one:'Your school has one section so far. Create a second one and [c] will move into it.',sc_move_go:'Add to section',sc_move_make:'Create and add'});
+Object.assign(D.fr,{sc_move:'Ajouter à une section',sc_move_h:'Ajouter à une section',sc_move_for:'Classe : [c]',sc_move_new:'Créer une nouvelle section',sc_move_cur:'actuelle',sc_move_one:'Votre école n’a qu’une section pour l’instant. Créez-en une deuxième et [c] y sera déplacée.',sc_move_go:'Ajouter à la section',sc_move_make:'Créer et ajouter'});
+async function scMoveOpen(id){await scLoad();const k=(CLS.c||[]).find(x=>x.id==id);if(!k)return;const sc=SCT.sections||[],multi=sc.length>1;
+ const body=multi?`<fieldset class=sc-mv onchange="$('#sc_mn').hidden=(document.querySelector('[name=sc_m]:checked')||{}).value!='new'">${sc.map(x=>`<label class=rad><input type=radio name=sc_m value=${x.id} ${x.id==k.section_id?'checked':''}> <span>${esc(x.name)}${x.id==k.section_id?` <small>(${t('sc_move_cur')})</small>`:''}</span></label>`).join('')}<label class=rad><input type=radio name=sc_m value=new> <span>${t('sc_move_new')}</span></label></fieldset><div id=sc_mn hidden><label for=sc_n>${t('sc_name')}</label><input type=text id=sc_n maxlength=40 placeholder="Primary"></div>`
+ :`<p>${t('sc_move_one').replace('[c]','<b>'+esc(k.name)+'</b>')}</p><label for=sc_f>${t('sc_first')}</label><input type=text id=sc_f maxlength=40 placeholder="Anglophone" value="${esc((sc[0]&&sc[0].name!='Main')?sc[0].name:'')}"><small>${t('sc_firsth')}</small><label for=sc_n>${t('sc_new')}</label><input type=text id=sc_n maxlength=40 placeholder="Francophone">`;
+ ovOpen(`<h2>${t('sc_move_h')}</h2><p><small>${t('sc_move_for').replace('[c]',esc(k.name))}</small></p>${body}<p class=err id=sc_e></p><div class=ov-a><button type=button class=sb onclick="ovClose()">${t('sc_cancel')}</button><button type=button onclick="scMoveGo(${id},${multi})">${fi('check',18)} ${t(multi?'sc_move_go':'sc_move_make')}</button></div>`);
+ setTimeout(()=>{const i=$(multi?'[name=sc_m]:checked':'#sc_f');i&&i.focus()},50)}
+async function scMoveGo(id,multi){const k=(CLS.c||[]).find(x=>x.id==id);if(!k)return;const v=multi?(document.querySelector('[name=sc_m]:checked')||{}).value:'new',err=m=>{$('#sc_e').textContent=m};let sid;
+ if(v=='new'){const b={name:($('#sc_n').value||'').trim()};if(!multi){b.rename_first=($('#sc_f').value||'').trim();if(!b.rename_first)return $('#sc_f').focus()}
+  if(!b.name)return $('#sc_n').focus();const r=await api('sections',b);if(!r.ok)return err(em(r.s,r.d.error));sid=r.d.id}else sid=+v;
+ if(sid!=k.section_id){const r=await api('classes/update',{class_id:id,name:k.name,short:k.short||k.name.replace(/\s+/g,'').slice(0,8).toUpperCase(),head_id:k.head_id||null,section_id:sid});if(!r.ok)return err(r.d.error=='duplicate'?t('cl_dup'):em(r.s,r.d.error))}
+ ovClose();await scLoad();CLS.sec=0;CLS.open=0;LS={};vClasses()}
 // staff: teachers pick their sections; the list can be filtered by section
 let SFS=0;
 function secStaff(){if(!scMulti()){return}
