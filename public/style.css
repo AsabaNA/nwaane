@@ -1214,3 +1214,19 @@ body.tw-selmode .tw-cell.dd:not(.free){cursor:cell}
 .imp-nw{display:flex;gap:6px;flex:1 1 100%}.imp-nw[hidden]{display:none}.imp-nw input{flex:1 1 150px;min-width:0}.imp-nw .imp-sh{flex:0 1 100px}
 .imp-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e8f0fe;color:#1a56b0;white-space:nowrap}.imp-tag.ask{background:#fff3d6;color:#9a5b00}.imp-tag.new{background:#e3f6e8;color:#1b6b34}
 .imp-u select{border-color:#e0a100;box-shadow:0 0 0 2px #fff3d6}
+/* classes and students toolbar: search, then Add class / Import / Print on ONE line (mobile mockup) */
+.pr-m{display:none!important}.fr-content .tb-a{display:contents}
+@media(max-width:700px){
+ .fr-content .tb .srch{flex:1 1 100%;min-width:0}
+ .fr-content .tb .tb-a{display:flex;flex:1 1 100%;gap:8px;flex-wrap:nowrap}
+ .fr-content .tb .tb-a>*{flex:1 1 0;min-width:0;margin:0;min-height:46px;padding:0 8px;font-size:14px;font-weight:600;white-space:nowrap;justify-content:center;border-radius:12px}
+ .fr-content .tb .tb-a>.pr-d{display:none!important}
+ .fr-content .tb .tb-a>.pr-m{display:inline-flex!important;flex:0 0 auto;padding:0 14px}
+ .fr-content .tb .tb-a>.add-m{order:1}.fr-content .tb .tb-a>.imp-m{order:2}.fr-content .tb .tb-a>.pr-m{order:3}
+ .sc-hint{padding:12px;gap:8px}.sc-hint h2{font-size:15px;margin:0 0 2px}.sc-hint p{font-size:13px;line-height:1.4}.sc-ha button{min-height:40px;font-size:14px;padding:0 14px}
+}
+.ovl.prs .ovc .grab{display:none}
+.ovl.prs .ovc h2{margin-bottom:6px}.ovl.prs .ovc button.item{display:flex;width:100%;gap:14px;align-items:center;justify-content:flex-start;text-align:left;background:#fff;color:var(--m-ink);border:0;border-top:1px solid var(--m-line,#eee);border-radius:0;min-height:60px;padding:10px 4px;font-weight:400}
+.ovl.prs .ovc button.item:first-of-type{border-top:0}.ovl.prs .ovc button.item span{display:block}.ovl.prs .ovc button.item b{display:block;font-size:15px}.ovl.prs .ovc button.item small{display:block;color:var(--m-ink-soft);font-size:12px}
+@media(max-width:700px){.ovl.prs{align-items:flex-end;padding:0}.ovl.prs .ovc{border-radius:20px 20px 0 0;max-width:none;padding-bottom:24px}.ovl.prs .ovc .grab{display:block;width:40px;height:4px;background:#ddd;border-radius:4px;margin:0 auto 12px}}
+.l-m{display:none}@media(max-width:700px){.l-d{display:none}.l-m{display:inline}}
