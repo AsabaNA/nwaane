@@ -1208,3 +1208,9 @@ body.tw-selmode .tw-cell.dd:not(.free){cursor:cell}
 .tplist .tpt{background:var(--m-card)!important;color:var(--m-ink)!important;align-items:flex-start!important;text-align:left!important;font-weight:500!important;text-transform:none!important;letter-spacing:0!important;box-shadow:none}
 .tplist .tpt b{font-weight:600}.tplist .tpt small{color:var(--m-ink-faint)!important;font-weight:400}.tplist .tpt.on{background:var(--m-paper)!important;box-shadow:inset 3px 0 0 var(--m-brand)}
 .tpact .btn{white-space:nowrap}
+.imp-g{margin:10px 0;border:1px solid var(--m-border,#d5d9e4);border-radius:10px;padding:10px 12px}.imp-g h3{margin:0 0 2px;font-size:15px}
+.imp-gr{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--m-border,#e6e9f0)}.imp-gr:first-of-type{border-top:0}
+.imp-gl{flex:1 1 220px;min-width:0}.imp-gr select{flex:1 1 200px;max-width:280px}
+.imp-nw{display:flex;gap:6px;flex:1 1 100%}.imp-nw[hidden]{display:none}.imp-nw input{flex:1 1 150px;min-width:0}.imp-nw .imp-sh{flex:0 1 100px}
+.imp-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e8f0fe;color:#1a56b0;white-space:nowrap}.imp-tag.ask{background:#fff3d6;color:#9a5b00}.imp-tag.new{background:#e3f6e8;color:#1b6b34}
+.imp-u select{border-color:#e0a100;box-shadow:0 0 0 2px #fff3d6}

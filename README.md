@@ -271,6 +271,13 @@ Payments tab rebuilt after the mockup, in the app's own colours: term pills, thr
 - Not included: teachers (each needs a verified email) and marks (they belong to the teacher who submits them).
 - Dependency: `fflate` (already installed through pdfkit) is now declared in `package.json`.
 
+
+**Class-aware import.** The import reads the class column however it is written and compares it with the school's classes (English and French forms: Form 1 A, F1A, 1A, 6e, Sixième, L6 Arts, Tle C...).
+- Confident matches are merged automatically, but shown in a "Classes found in the file" panel where they can be changed.
+- Ambiguous names (for example "Form 1" when 1A and 1B exist) must be decided: the Import button stays disabled until every group has a choice.
+- Names that match nothing are grouped across spellings (Form 7 A / F7A / 7A becomes one group) and offered as a new class with an editable name and a suggested short code. Principal and secretary can create classes during import.
+- Each group can also be skipped. Commit takes `{token,dups,map}`; `map[group]` is `{a:'merge',id}`, `{a:'new',name,short}` or `{a:'skip'}`. The result lists the classes created.
+
 ## Phase 7b: optional honour roll
 
 Off by default. Principal: Settings, Report cards tab, "Honour roll" (`honour.js`, `public/honour.js`).
