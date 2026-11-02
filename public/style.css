@@ -1241,3 +1241,11 @@ body.pgtd #m h1{display:none}body.pgtd #m{padding-top:14px}
 @media(max-width:700px){#pgtabs.fr-content{padding-top:16px}.pgt-row .pay-btn{margin:0;flex:1 1 100%}}
 @media print{#pgtabs{display:none}}
 .ovc.payc{max-width:760px}
+
+/* report card page design picker */
+.cdd{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;margin:6px 0}
+button.cdt{display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:8px;border:1.5px solid #d6d8e0;border-radius:12px;background:#fff;color:#1b1b21;cursor:pointer;font:inherit;text-align:center;box-shadow:none;height:auto;min-height:0}
+button.cdt:hover{border-color:#8a94ff;background:#fff}button.cdt.on{border-color:#455aff;box-shadow:0 0 0 2px #455aff33;background:#f3f4ff}
+button.cdt b{font-size:13px;font-weight:600;color:inherit}
+.cdpg{display:flex;flex-direction:column;justify-content:space-between;height:84px;border:1px solid #e3e5ee;border-radius:6px;overflow:hidden;background:#fff}
+.cdpg svg{display:block;width:100%;height:auto;flex:none}.cdpg i{flex:1}

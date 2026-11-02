@@ -28,7 +28,7 @@ export class SchoolDO extends DurableObject {
         RT.driver = driver; RT.storage = makeR2(env.FILES); RT.timers = false; RT.pdfkit = { PDFDocument, toBytes }; RT.env = env;
         const { default: app } = await import('../app.js');
         app.readStatic = async rel => {
-          let p = String(rel).split('?')[0]; if (!p.startsWith('/')) p = '/' + p; if (p === '/') p = '/index.html';
+          let p = String(rel).split('?')[0]; if (!p.startsWith('/')) p = '/' + p; if (p === '/') p = '/store.html';
           const r = await G.__school.env.ASSETS.fetch('https://assets.invalid' + p); if (!r.ok) return null;
           return { body: Buffer.from(await r.arrayBuffer()), type: r.headers.get('content-type'), mtime: null };
         };
@@ -90,7 +90,7 @@ export default {
       return new Response('Not found', { status: 404 });
     }
     if (/^(GET|HEAD)$/.test(request.method) && !p.startsWith('/api/')) {   // an exact static file wins, as with express.static
-      const r = await env.ASSETS.fetch(new Request(new URL(p === '/' ? '/index.html' : p, u), request));
+      const r = await env.ASSETS.fetch(new Request(new URL(p === '/' ? '/store.html' : p === '/app' ? '/index.html' : p, u), request));
       if (r.status !== 404) { const h = new Headers(r.headers); for (const k in SEC) h.set(k, SEC[k]); return new Response(r.body, { status: r.status, headers: h }); }
     }
     const h = new Headers(request.headers); h.set('x-client-ip', request.headers.get('cf-connecting-ip') || '');

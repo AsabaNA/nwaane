@@ -6,6 +6,6 @@ const tok=new URLSearchParams(location.search).get('token')||'';
 async function go(e){e.preventDefault();if($('#p1').value!=$('#p2').value)return $('#e').textContent='The two passwords do not match.',false;
  const r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,password:$('#p1').value})});const d=await r.json().catch(()=>({}));
  if(!r.ok)return $('#e').textContent=r.status==410?'This link has expired or was already used. Ask for a new one.':r.status==429?'Too many attempts. Try again later.':'Choose a password with at least 8 characters.',false;
- $('#cd').innerHTML=`<h1>Password changed</h1><p class=sub>Sign in with school code <b>${d.code}</b> and username <b>${d.username}</b>.</p><a class="b p" href="/" style="margin-top:14px">Go to sign in</a>`;return false}
+ $('#cd').innerHTML=`<h1>Password changed</h1><p class=sub>Sign in with school code <b>${d.code}</b> and username <b>${d.username}</b>.</p><a class="b p" href="/app" style="margin-top:14px">Go to sign in</a>`;return false}
 function $(s){return document.querySelector(s)}
 </script></body></html>

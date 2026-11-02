@@ -631,3 +631,30 @@ Below 700px the toolbar is the search box on its own line, then **Add class**, *
 - **Finance** = Payments | Fee setup | Hours & pay, with a **Pay fees** button beside the tabs that opens Record payment in a pop-up (`payOpen`). Fee setup and Hours & pay are principal only; the secretary sees Payments. "Same for every class" is the first row of Fee setup. The old Record payment page opens the same pop-up over Payments, so search results and old links still work.
 - **Academics** = Student report cards | Teacher report cards | Exams. On the Exams tab a **Create exam timetable** button (principal) opens the wizard of the Timetable page's Exam timetable tab. Teacher report cards still need the complete package.
 - The tab bar lives in `#pgtabs`, above the page, so the old views (`vFees`, `vHours`, `vReports`, `vTprof`, `vExams`) are unchanged and re-render freely. Their own page titles are hidden while a tab bar is shown.
+
+## Importing teachers
+Staff page → **Import teachers** (principal only). Upload `.xlsx` or `.csv` (template download included, EN/FR headings recognised).
+- One teacher per row, several subjects/classes in a cell separated by `, ; / & +` or "and/et", or one row per subject (a blank name continues the previous teacher).
+- Subjects are created per class when missing. Spellings are matched across languages (Maths = Mathematics = Mathématiques). A new subject copies the coefficient used for that subject elsewhere in the school, else the file's `Coef` column, else 1.
+- Class names not matching exactly go through the same merge / ask / create-new panel as the student import.
+- If a subject already has a teacher, the preview lists it with **Keep current** (default) or **Use the new teacher**.
+- Existing staff are matched by email (or exact name) and only receive the new subjects; no duplicate account is made.
+- New accounts get a 10-character temporary password, shown once on the done screen (download CSV / print). Email is verified by code at first sign-in. A welcome email (no password) is queued, spaced 600 ms apart.
+- Routes: `GET /api/import/teachers/template`, `POST .../preview`, `.../plan`, `.../commit`. Preview and plan save nothing; the token lives 30 minutes and is single-use.
+
+## Storefront (public site) and the app address
+- `/` is the public storefront (`public/store.html`, built from the Meridian mockup), `/app` is the platform (`public/index.html`). `/app/` redirects to `/app`. `/index.html` still opens the app.
+- Sign-up CTAs go to `/app?signup`, which opens the sign-up wizard; `?ref=CODE` is kept (referral links are now `/app?signup&ref=CODE`; old `/?ref=CODE` links still work: the storefront forwards the code to its sign-up buttons).
+- English/French switch on the storefront shares the app's `lang` choice. French text lives in `public/store-fr.js` (English text -> French); a new English sentence without an entry simply stays English.
+- Prices on the page come from `GET /api/prices`, so changing prices in billing changes the page. The numbers in the HTML are only the fallback.
+- **Contact address**: edit `public/store-config.js` (`contact`). While it still contains `REPLACE-ME` the "Contact us" link and footer line are hidden.
+- **Try the demo** (`/demo`): signs the visitor into the demo school (`schools.demo=1`, e.g. `node seed.js`) as its principal with a read-only session (`dm_` token). Every write returns 403 `demo_readonly`; a banner offers "Create your school". The button only shows when `GET /api/demo/status` says a demo school exists.
+- Cloudflare: the worker serves `/` from `store.html` and `/app` from `index.html` at the edge. Welcome emails link to `/app`; the PWA starts at `/app`.
+- Material icons load from Google Fonts (subset). If that font cannot load, the page hides the icons instead of showing their names.
+- Not included: Privacy and Terms pages (the mockup linked to them); add them when you have the text.
+
+## Report card page designs
+Settings → Report cards → **Page design**: the pattern along the top and bottom edge of the card (content, table and footer are unchanged). Seven designs: Classic bars (the original, default), Circles, Triangles, Diamonds, Waves, Dots, Mosaic. They use the school's main and second colour.
+- `carddeco.js` holds each design as a list of shapes (rect / circle / polygon, in mm, for the top edge of an A4 page); the bottom edge is the same drawing mirrored. The PDF (`pdf.js`, `strips()`) and the previews in Settings (SVG) draw from the same shapes, so the picker matches the print. Designs stay within 7 mm of each edge, clear of the header and footer.
+- Stored in `schools.card_design`. `GET /api/card/designs` lists the shapes; `POST /api/settings/card` takes an optional `design` (omit it to keep the current one); `GET /api/report/preview?design=` previews a design without saving.
+- To add a design: add an entry to `DESIGNS` in `carddeco.js` and its names (`cd_d_<id>`, EN/FR) in `public/cardset.js`.

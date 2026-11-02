@@ -66,6 +66,7 @@ const SXCONTROLS=[
  SXC('classes','c_sections','Set up sections (English, French, …)','Créer des sections (anglophone, francophone…)','sections anglophone francophone subsystem sous-systeme primary primaire','[onclick^="scAddOpen"]',{r:['principal'],opt:true}),
  // ---- staff
  SXC('staff','sf_badges','Print staff ID badges','Imprimer les badges du personnel','staff teachers badges id cards photo scan gate badge personnel enseignants','#tbbtn'),
+ SXC('staff','sf_impt','Import teachers from a spreadsheet','Importer des enseignants depuis un tableur','import teachers excel csv upload spreadsheet subjects tableur enseignants fichier matieres','[onclick^="itOpen"]',{r:['principal']}),
  SXC('staff','sf_add','Add a staff member','Ajouter un membre du personnel','add teacher staff secretary new account create ajouter enseignant compte','[onclick*="#fh"]'),
  SXC('staff','sf_print','Print the staff list','Imprimer la liste du personnel','print staff list imprimer personnel','[onclick="print()"]'),
  // ---- settings

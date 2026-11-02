@@ -1,5 +1,5 @@
 const express=require('./core/web'),cookie=()=>(q,s,n)=>n(),crypto=require('crypto'),{db,tx,hash,verify,code}=require('./db');
-const SEC=require('./secure'),app=express();SEC.harden(app);app.use((req,res,next)=>{res.on('error',e=>console.error('response error:',req.path,e.code||e.message));next()});app.use(express.json({limit:'300kb'}),cookie(),express.static('public'));
+const SEC=require('./secure'),app=express();SEC.harden(app);app.use((req,res,next)=>{res.on('error',e=>console.error('response error:',req.path,e.code||e.message));next()});app.use(express.json({limit:'300kb'}),cookie(),express.static('public',{index:false}));
 const REF=require('./referral'),SECT=require('./sections'),B=require('./billing'),BK=require('./backup'),now=()=>new Date().toISOString(),E=(res,s,e)=>res.status(s).json({error:e});
 const audit=(u,a,d='')=>db.prepare('INSERT INTO audit(school_id,user_id,action,detail) VALUES(?,?,?,?)').run(u.school_id,u.id,a,d);
 const LIFE=role=>12*36e5; // everyone signs in again for every new session: the cookie ends when the browser closes, and the server drops it after 12 h
@@ -16,6 +16,7 @@ const userOf=tok=>{if(String(tok||'').startsWith('sp_'))return supportUser(tok);
 const auth=(roles=[],free=false)=>(req,res,next)=>{
  const u=userOf(req.cookies.t);
  if(!u)return E(res,401,'auth');if(roles.length&&!roles.includes(u.role))return E(res,403,'role');
+ if(String(req.cookies.t||'').startsWith('dm_')&&req.method!='GET'&&req.path!='/api/logout')return E(res,403,'demo_readonly');   // public demo visitors can look, never change
  if(u.support){if(req.method!='GET'&&req.path!='/api/logout')return E(res,403,'support_readonly');
   if(req.method=='GET'&&!/^\/api\/(me|badges|announcements|billing)/.test(req.path)){const a=req.path.split('/')[2]||'',L=(u.areas||'').split(',').filter(Boolean);if(a&&!L.includes(a))L.push(a);db.prepare("UPDATE support_sessions SET reads=reads+1,last_seen=?,areas=? WHERE id=?").run(now(),L.join(','),u.support_id)}}
  if(!u.support&&!free&&req.method!='GET'&&!READ_OK.test(req.path)){const g=B.gate(u.school_id);if(g)return E(res,402,g)}
@@ -62,7 +63,7 @@ app.post('/api/login',async(req,res)=>{const{code='',username='',password=''}=re
  const tk=A2.make({user_id:u.id,kind:'login'}),s=await A2.sendCode(A2.get(tk),u.email,lang,u.email_ok?'login':'verify');
  res.json({step:'code',ticket:tk,hint:A2.hint(u.email),sent:s=='ok'})});
 A2.routes(app,{session,audit});
-app.get('/api/me',auth([],true),(req,res)=>{const u=req.user;const sc=school(req),ck=SC.clock(sc);res.json({uid:u.id,gate:isGate(u),demo:!!sc.demo,now:ck,can_gate:!!u.can_gate,heads:db.prepare('SELECT COUNT(*) n FROM classes WHERE head_id=?').get(u.id).n,seqs:R.seqs(school(req)),year:school(req).year,name:u.name,role:u.role,roll:school(req).roll_mode||'off',honour:!!school(req).hr_on,sections:SECT.ensure(req.user.school_id).length,school:u.school,code:u.scode,support:u.support?{owner:u.support_owner,expires:u.support_expires}:null,modules:(school(req).modules||'reports,fees,tracking').split(','),ai:require('./ai').flag(u),bill:B.status(u.school_id),readonly:!!B.gate(u.school_id),active:true})});
+app.get('/api/me',auth([],true),(req,res)=>{const u=req.user;const sc=school(req),ck=SC.clock(sc);res.json({uid:u.id,gate:isGate(u),demo:!!sc.demo,now:ck,can_gate:!!u.can_gate,heads:db.prepare('SELECT COUNT(*) n FROM classes WHERE head_id=?').get(u.id).n,seqs:R.seqs(school(req)),year:school(req).year,name:u.name,role:u.role,roll:school(req).roll_mode||'off',honour:!!school(req).hr_on,sections:SECT.ensure(req.user.school_id).length,school:u.school,code:u.scode,demo_ro:String(req.cookies.t||'').startsWith('dm_'),support:u.support?{owner:u.support_owner,expires:u.support_expires}:null,modules:(school(req).modules||'reports,fees,tracking').split(','),ai:require('./ai').flag(u),bill:B.status(u.school_id),readonly:!!B.gate(u.school_id),active:true})});
 app.post('/api/logout',auth([],true),(req,res)=>{if(req.user.support){db.prepare('UPDATE support_sessions SET ended=? WHERE id=?').run(now(),req.user.support_id);res.clearCookie('t');return res.json({ok:1})}
  db.prepare('DELETE FROM sessions WHERE token=?').run(req.cookies.t);res.clearCookie('t');res.json({ok:1})});
 // --- classes (principal manages)
@@ -215,18 +216,21 @@ app.get('/api/subjects/parts',auth(['principal']),(req,res)=>{const sid=req.user
  const team=teamIds(sub),n=db.prepare('SELECT COUNT(*) n FROM students WHERE class_id=? AND active=1').get(sub.class_id).n,nm=Object.fromEntries(db.prepare('SELECT id,name FROM users WHERE school_id=?').all(sid).map(u=>[u.id,u.name]));
  res.json({on:!!sub.parts,students:n,seqs:R.seqs(school(req)).map(q=>({id:q.id,team:team.map(id=>({id,name:nm[id],main:id==sub.teacher_id,entered:db.prepare('SELECT COUNT(*) n FROM mark_parts WHERE subject_id=? AND seq=? AND teacher_id=?').get(sub.id,q.id,id).n,submitted:!!db.prepare('SELECT 1 FROM mark_part_sheets WHERE subject_id=? AND seq=? AND teacher_id=?').get(sub.id,q.id,id)}))}))})});
 // --- school settings (header text, year, sequences per term)
-app.get('/api/settings',auth(['principal']),(req,res)=>{const x=school(req);const y=B.schoolYear(SC.clock(x).date);res.json({card:{c1:x.card_c1||'#1e5d46',c2:x.card_c2||'',lang:x.card_lang||'both',logo:x.card_logo||'',fees:x.card_fees!=0,has_fees:(x.modules||'reports,fees,tracking').includes('fees')},honour:{on:!!x.hr_on,tiers:R.hrTiers(x),top:x.hr_top||0,nofail:x.hr_nofail||0},name:x.name,header:x.header||'',year:x.year||'',seq_plan:x.seq_plan||'2,2,2',term_year:y,terms:B.termsOf(x,y).map(r=>[r.start,r.end])})});
+app.get('/api/settings',auth(['principal']),(req,res)=>{const x=school(req);const y=B.schoolYear(SC.clock(x).date);res.json({card:{design:require('./carddeco').ok(x.card_design),c1:x.card_c1||'#1e5d46',c2:x.card_c2||'',lang:x.card_lang||'both',logo:x.card_logo||'',fees:x.card_fees!=0,has_fees:(x.modules||'reports,fees,tracking').includes('fees')},honour:{on:!!x.hr_on,tiers:R.hrTiers(x),top:x.hr_top||0,nofail:x.hr_nofail||0},name:x.name,header:x.header||'',year:x.year||'',seq_plan:x.seq_plan||'2,2,2',term_year:y,terms:B.termsOf(x,y).map(r=>[r.start,r.end])})});
 // ---- report card design (logo, up to two colours, languages)
 const HEX=/^#[0-9a-f]{6}$/i,lum=h=>{const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2]};
 function logoOk(u){const m=/^data:(image\/(png|jpeg));base64,([A-Za-z0-9+\/=]+)$/.exec(u||'');if(!m)return false;const b=Buffer.from(m[3],'base64');if(b.length>150e3||b.length<100)return false;
  return m[2]=='png'?b.slice(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):(b[0]==0xff&&b[1]==0xd8)}
-app.post('/api/settings/card',auth(['principal']),(req,res)=>{const{c1,c2='',lang,logo,fees}=req.body,sid=req.user.school_id;
+app.post('/api/settings/card',auth(['principal']),(req,res)=>{const{c1,c2='',lang,logo,fees,design}=req.body,sid=req.user.school_id;
  if(!HEX.test(c1||''))return E(res,400,'color');if(lum(c1)>.5)return E(res,400,'too_light');if(c2&&!HEX.test(c2))return E(res,400,'color');if(!['en','fr','both'].includes(lang))return E(res,400,'invalid');
  if(logo&&!logoOk(logo))return E(res,400,'logo');
+ if(design!==undefined&&!require('./carddeco').IDS.includes(design))return E(res,400,'invalid');
  db.prepare('UPDATE schools SET card_c1=?,card_c2=?,card_lang=? WHERE id=?').run(c1.toLowerCase(),c2.toLowerCase(),lang,sid);
+ if(design!==undefined)db.prepare('UPDATE schools SET card_design=? WHERE id=?').run(design,sid);
  if(typeof fees=='boolean')db.prepare('UPDATE schools SET card_fees=? WHERE id=?').run(fees?1:0,sid);
  if(logo!==undefined)db.prepare('UPDATE schools SET card_logo=? WHERE id=?').run(logo||null,sid);audit(req.user,'school.card');res.json({ok:1})});
-app.get('/api/report/preview',auth(['principal']),async(req,res,next)=>{try{await P.preview(res,{sc:school(req),n:Math.max(1,Math.min(30,+req.query.n||8)),lang:['en','fr','both'].includes(req.query.lang)?req.query.lang:null,term:[1,2,3].includes(+req.query.term)?+req.query.term:1})}catch(e){next(e)}});
+app.get('/api/card/designs',auth(['principal']),(req,res)=>res.json({ids:require('./carddeco').IDS,svg:Object.fromEntries(require('./carddeco').IDS.map(i=>[i,require('./carddeco').shapes(i)]))}));
+app.get('/api/report/preview',auth(['principal']),async(req,res,next)=>{try{await P.preview(res,{sc:{...school(req),...(require('./carddeco').IDS.includes(req.query.design)?{card_design:req.query.design}:{})},n:Math.max(1,Math.min(30,+req.query.n||8)),lang:['en','fr','both'].includes(req.query.lang)?req.query.lang:null,term:[1,2,3].includes(+req.query.term)?+req.query.term:1})}catch(e){next(e)}});
 app.post('/api/settings',auth(['principal']),(req,res)=>{const{name='',header='',year='',seq_plan='',terms}=req.body,x=school(req);
  const okT=!terms||(Array.isArray(terms)&&terms.length==3&&terms.every((r,i)=>Array.isArray(r)&&SC.isDate(r[0])&&SC.isDate(r[1])&&r[0]<r[1]&&(!i||terms[i-1][1]<r[0])));
  if(!okT)return E(res,400,'dates');
@@ -295,7 +299,16 @@ app.get('/api/support',auth(['principal']),(req,res)=>{const x=school(req),on=!!
 app.post('/api/support',auth(['principal']),(req,res)=>{const x=school(req),on=!!req.body.on;
  db.prepare('UPDATE schools SET support_until=? WHERE id=?').run(on?new Date(Date.now()+864e5).toISOString():null,x.id);
  if(!on)db.prepare('UPDATE support_sessions SET ended=? WHERE school_id=? AND ended IS NULL').run(now(),x.id);audit(req.user,on?'support.allow':'support.revoke');res.json({ok:1})});
-app.get('/support/enter',(req,res)=>{const t=String(req.query.token||'');if(!supportUser(t))return res.status(410).send('This support link has expired.');res.cookie('t',t,SEC.cookieOpts(res,{httpOnly:true,sameSite:'lax'}));res.redirect('/')});
+app.get('/support/enter',(req,res)=>{const t=String(req.query.token||'');if(!supportUser(t))return res.status(410).send('This support link has expired.');res.cookie('t',t,SEC.cookieOpts(res,{httpOnly:true,sameSite:'lax'}));res.redirect('/app')});
+// ---- public storefront at /, the app at /app, and the read-only demo
+const PUB=f=>(req,res)=>res.sendFile(require('path').join(__dirname,'public',f));
+app.get('/',PUB('store.html'));const APP=(req,res)=>req.path=='/app/'?res.redirect(301,'/app'+(req.url.includes('?')?req.url.slice(req.url.indexOf('?')):'')):PUB('index.html')(req,res);app.get('/app',APP);app.get('/app/',APP);
+const demoSchool=()=>db.prepare("SELECT s.id FROM schools s WHERE s.demo=1 AND EXISTS(SELECT 1 FROM users u WHERE u.school_id=s.id AND u.role='principal' AND u.active=1) ORDER BY s.id LIMIT 1").get();
+app.get('/api/demo/status',(req,res)=>res.json({on:!!demoSchool()}));
+app.get('/demo',(req,res)=>{const d=demoSchool();if(!d)return res.redirect('/?demo=off');
+ db.prepare("DELETE FROM sessions WHERE token LIKE 'dm\\_%' ESCAPE '\\' AND created<datetime('now','-1 day')").run();
+ const u=db.prepare("SELECT id FROM users WHERE school_id=? AND role='principal' AND active=1 ORDER BY id LIMIT 1").get(d.id),t='dm_'+require('crypto').randomBytes(24).toString('hex');
+ db.prepare('INSERT INTO sessions(token,user_id) VALUES(?,?)').run(t,u.id);res.cookie('t',t,SEC.cookieOpts(res,{httpOnly:true,sameSite:'lax',maxAge:6*3600e3}));res.redirect('/app')});
 app.get('/reset',(req,res)=>res.sendFile(require('path').join(__dirname,'public','reset.html')));
 const rl={};
 app.post('/api/reset',(req,res)=>{if((rl[req.ip]=(rl[req.ip]||0)+1)>10)return E(res,429,'many');setTimeout(()=>rl[req.ip]--,6e5);const{token='',password=''}=req.body;if(!strong(password))return E(res,400,'pw');
@@ -308,7 +321,7 @@ require('./owners')(app);REF(app);require('./ai')(app,{auth,E,audit:(u,a,d)=>aud
 const SCx=0;require('./phase4')(app,{auth,userOf,E,audit,school,tx,isGate});
 require('./dash')(app,{auth,school});
 require('./roll')(app,{auth,E,audit,school});
-require('./imp')(app,{auth,E,audit,school});
+require('./imp')(app,{auth,E,audit,school});require('./imp-t')(app,{auth,E,audit,school,hash,SC,M:require('./mail')});
 require('./honour')(app,{auth,E,audit,school});
 require('./sections')(app,{auth,E,audit});
 require('./examapi')(app,{auth,E,audit,school});

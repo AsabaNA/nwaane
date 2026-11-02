@@ -148,3 +148,4 @@ module.exports=(app,{auth,E,audit,school})=>{
   for(const c of made)audit(req.user,'class.add',c+' (import)');
   audit(req.user,'student.import',added+' students');res.json({added,skipped:j.rows.length-added,classes_created:made.length,created:made})});
 };
+module.exports.H={norm,parseCSV,parseXLSX,isZip,clean,parseCls,rel,matchCls,suggestShort,MAXROWS};

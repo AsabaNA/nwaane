@@ -78,7 +78,7 @@ function card(doc,x){   // x: {sc,P,c,s,cls,mode,term,qr,code,url,logo,size,fees
  const lines=rows.map(r=>h.subjLines(r.subject,TY.SUBJ,TY.subject,colW,colW-minT(r))),LS_=TY.subject*1.08,
   hs=lines.map(l=>Math.max(h.lh(TY.subject)+TY.rowPadV,l.length>1?l.length*LS_+TY.rowPadV:0)),sumH_=hs.reduce((a,b)=>a+b,0);
  // ---- page furniture
- const strips=()=>{doc.rect(0,0,W,bandH).fill(P.c1);doc.rect(0,bandH,W,accH).fill(P.c2);doc.rect(0,H-bandH,W,bandH).fill(P.c1);doc.rect(0,H-bandH-accH,W,accH).fill(P.c2)};
+ const strips=()=>require('./carddeco').draw(doc,P,sc.card_design,W,H);   // the page's top and bottom edge (the school's chosen design)
  const letterhead=y=>{const logoW=mm(19),logoH=mm(21),hh=mm(23);
   if(x.logo){try{doc.image(x.logo,L,y,{fit:[logoW,logoH],align:'center',valign:'center'})}catch{}}
   const head=HEAD(sc).filter((v,i)=>!i||!/republic of cameroon|république du cameroun/i.test(v)),cx=L+logoW+mm(4),cw=CW-2*(logoW+mm(4));

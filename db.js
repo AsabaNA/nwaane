@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS price_plan(eff TEXT NOT NULL,key TEXT NOT NULL,value 
 // ---- Phase 6c: usage, support mode, reset links, announcements, backups
 try{db.exec("ALTER TABLE schools ADD COLUMN support_until TEXT")}catch{}
 // report card design: logo (data URL), up to two colours, languages shown (en | fr | both)
-for(const c of['card_logo TEXT',"card_c1 TEXT DEFAULT '#1e5d46'","card_c2 TEXT DEFAULT ''","card_lang TEXT DEFAULT 'both'"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
+for(const c of['card_logo TEXT',"card_c1 TEXT DEFAULT '#1e5d46'","card_c2 TEXT DEFAULT ''","card_lang TEXT DEFAULT 'both'","card_design TEXT DEFAULT 'bars'"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
 // school location for the "you must be at school" check on lesson confirmation
 for(const c of['geo_lat REAL','geo_lng REAL','geo_r INTEGER DEFAULT 150'])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
 try{db.exec('ALTER TABLE lessons ADD COLUMN geo_m INTEGER')}catch{}

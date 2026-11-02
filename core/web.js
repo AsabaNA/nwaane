@@ -90,7 +90,7 @@ function express(){return createApp()}
 express.Router=()=>new Router();express.json=json;express.raw=raw;express.createApp=createApp;
 module.exports=express;module.exports.parseCookies=parseCookies;
 // static files: the platform adapter provides app.readStatic(path) -> {body,type,mtime}|null (Node reads public/, Workers asks the assets binding)
-express.static=()=>async(req,res,next)=>{if(!/^(GET|HEAD)$/.test(req.method)||!req.app.readStatic)return next();
+express.static=(dir,o)=>async(req,res,next)=>{if(!/^(GET|HEAD)$/.test(req.method)||!req.app.readStatic)return next();if(o&&o.index===false&&req.path=='/')return next();
  const f=await req.app.readStatic(req.path);if(!f)return next();
  const etag='W/"'+f.body.length.toString(16)+'-'+Math.floor((f.mtime?f.mtime.getTime():0)/1000).toString(16)+'"';
  res.setHeader('etag',etag);if(f.mtime)res.setHeader('last-modified',f.mtime.toUTCString());res.setHeader('cache-control','public, max-age=0');res.setHeader('accept-ranges','bytes');if(f.type)res.setHeader('content-type',f.type);

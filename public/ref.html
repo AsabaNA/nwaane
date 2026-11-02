@@ -31,7 +31,7 @@ function codeView(m='',good){shell(`<h2>${t('code_h')}</h2><p class=lead>${t('co
 async function vf(e){e.preventDefault();const r=await api('verify',{ticket:TK,code:$('#cd').value});if(!r.ok){if(r.s==410){TK=null;return authView(t('e_expired')),false}$('#e').textContent=er(r);return false}TK=null;load();return false}
 async function again(){const r=await api('resend',{ticket:TK,lang:L});if(r.s==410){TK=null;return authView(t('e_expired'))}codeView(r.ok?t('sent'):er(r),r.ok)}
 async function load(){const r=await api('me');if(!r.ok){ME=null;return authView()}ME=r.d;dash()}
-function dash(){const d=ME,link=location.origin+'/?ref='+d.code;
+function dash(){const d=ME,link=location.origin+'/app?signup&ref='+d.code;
  shell(`<h2>${t('hi')}, ${esc(d.name)}</h2><p class=lead>${t('intro')}</p>
  <div class=rf-link><span style="font-size:13px;font-weight:700">${t('yours')}</span><code style="font-size:22px;letter-spacing:2px;flex:none">${esc(d.code)}</code></div>
  <div class=rf-link><span style="font-size:13px;font-weight:700">${t('link')}</span><code>${esc(link)}</code><button class="sw-btn tonal" id=cp style="height:40px;padding:0 16px" onclick="cp()">${t('copy')}</button></div>
@@ -39,7 +39,7 @@ function dash(){const d=ME,link=location.origin+'/?ref='+d.code;
  <h3 style="font:700 16px Sora,sans-serif;margin:24px 0 4px">${t('sch')}</h3>${d.schools.length?`<table class=rf-t><tr><th>${t('school')}<th>${t('since')}<th>${t('state')}<th class=n>${t('earned')}</tr>${d.schools.map(s=>`<tr><td>${esc(s.name)}<td>${esc(s.since)}<td><span class="rf-c ${s.state}">${t('s_'+s.state)}</span><td class=n>${fm(s.earned)}`).join('')}</table>`:`<p class=m>${t('none')}</p>`}
  <h3 style="font:700 16px Sora,sans-serif;margin:24px 0 4px">${t('payouts')}</h3>${d.payouts.length?`<table class=rf-t><tr><th>${t('date')}<th>Ref<th class=n>FCFA</tr>${d.payouts.map(p=>`<tr><td>${esc(p.created)}<td>${esc((p.method||'').toUpperCase())} ${esc(p.ref||'')}<td class=n>${fm(p.amount)}`).join('')}</table>`:`<p class=m>${t('nopay')}</p>`}
  <p class=m style="margin-top:20px">${t('how')}</p><div class=sw-act><span></span><button class="sw-btn text" onclick="lo()">${t('out')}</button></div>`)}
-async function cp(){try{await navigator.clipboard.writeText(location.origin+'/?ref='+ME.code)}catch{}$('#cp').textContent=t('copied');setTimeout(()=>{if($('#cp'))$('#cp').textContent=t('copy')},1800)}
+async function cp(){try{await navigator.clipboard.writeText(location.origin+'/app?signup&ref='+ME.code)}catch{}$('#cp').textContent=t('copied');setTimeout(()=>{if($('#cp'))$('#cp').textContent=t('copy')},1800)}
 async function lo(){await api('logout',{});ME=null;MODE='in';authView()}
 document.documentElement.lang=L;load();
 </script></body></html>

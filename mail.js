@@ -18,5 +18,9 @@ const T={en:{code:(c,why)=>({subject:`${c} is your School Platform code`,text:`Y
  fr:{code:(c,why)=>({subject:`${c} est votre code School Platform`,text:`Votre code School Platform est ${c}.\n\n${why}\nIl est valable 10 minutes. Si vous n'essayez pas de vous connecter, ignorez cet e-mail et prévenez votre directeur.`}),
   why:{login:'Saisissez-le pour terminer la connexion sur cet appareil.',verify:'Saisissez-le pour confirmer cette adresse e-mail.'},
   reset:(n,u)=>({subject:'Réinitialisez votre mot de passe School Platform',text:`Bonjour ${n},\n\nChoisissez un nouveau mot de passe ici (valable une fois, expire dans 1 heure) :\n${u}\n\nSi vous n'avez rien demandé, ignorez cet e-mail.`})}};
+// welcome email for a teacher account made by an import: no password in the email (the principal hands it over)
+const W={en:(o)=>({subject:`Your ${o.school} account on School Platform`,text:`Hello ${o.name},\n\n${o.school} has created an account for you.\n\nSign in here: ${o.url}\nSchool code: ${o.code}\nUsername: ${o.user}\n\nYour principal will give you your temporary password. The first time you sign in we email you a 6-digit code to confirm this address. If you forget your password, use "Forgot password" on the sign-in page.\n\nIf you do not work at ${o.school}, ignore this email.`}),
+ fr:(o)=>({subject:`Votre compte ${o.school} sur School Platform`,text:`Bonjour ${o.name},\n\n${o.school} a créé un compte pour vous.\n\nConnexion : ${o.url}\nCode de l'école : ${o.code}\nIdentifiant : ${o.user}\n\nVotre directeur vous remettra votre mot de passe temporaire. À la première connexion, nous vous envoyons un code à 6 chiffres pour confirmer cette adresse. Si vous oubliez votre mot de passe, utilisez « Mot de passe oublié » sur la page de connexion.\n\nSi vous ne travaillez pas à ${o.school}, ignorez cet e-mail.`})};
+const welcome=(lang,o)=>(W[lang]||W.en)(o);
 const msg=(lang,kind,...a)=>{const l=T[lang]||T.en;return kind=='reset'?l.reset(...a):l.code(a[0],l.why[a[1]])};
-module.exports={send,msg,configured};
+module.exports={send,msg,welcome,configured};
