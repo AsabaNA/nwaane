@@ -31,7 +31,7 @@ window.vAcademics=async()=>{const t0=pgTabs('academics')[0];return t0?pgGo('acad
  const m=menuOf().filter(([k])=>k!='classlist'||S.heads),pick=new Set(),items=[];
  const CH={fees:'finance',recpay:'finance',hours:'finance',reports:'academics',tprofile:'academics',exams:'academics'};
  for(const [k,f] of m){const p=CH[k]&&pgTabs(CH[k]).length&&!(k=='hours'&&S.role!='principal')?CH[k]:null,kk=p||k,ff=p?PGV[p]:f;if(!pick.has(kk)){pick.add(kk);items.push([kk,ff])}}
- const ORD=[['dashboard'],['staff','today'],['classes','academics','timetable','roll'],['finance','billing'],['settings']],used=new Set(),out=[];
+ const ORD=[['dashboard'],['staff','today'],['classes','academics','timetable','roll'],['finance','billing'],['settings','help']],used=new Set(),out=[];
  ORD.forEach((g,i)=>{const it=g.map(k=>items.find(x=>x[0]==k)).filter(Boolean);it.forEach(x=>used.add(x[0]));out.push(['_'+i,it])});
  const rest=items.filter(x=>!used.has(x[0]));if(rest.length){const g3=out[2];g3[1]=g3[1].concat(rest)}
  return out.filter(g=>g[1].length)}}

@@ -25,7 +25,7 @@ const auth=(roles=[],free=false)=>(req,res,next)=>{
 // outputs withheld while a Term 3 invoice is unpaid (entering data stays open)
 const OUT=/^\/api\/(report(\/pdf|\/share)?|hours(\/pdf)?|fees\/receipt\/pdf|classes\/stats|dashboard|honour\/pdf|acct\/export|tprofile(\/.*)?)$/;
 const LK=req=>!req.user.support&&B.lockedOut(req.user.school_id);
-const READ_OK=/^\/api\/(report\/publish|logout)$/; // term-end report cards are never blocked
+const READ_OK=/^\/api\/(report\/publish|logout|help\/vote)$/; // term-end report cards are never blocked
 const TRK=/^\/api\/(structure|closed|unavail|timetable|mytimetable|classes\/qr|qr|today|gate|lesson|spot|hours|rates|myhours)(\/|$)/,FEE=/^\/api\/fees(\/|$)/,ROLL=/^\/api\/(roll|honour)(\/|$)/;
 app.use((req,res,next)=>{const f=FEE.test(req.path)?'fees':TRK.test(req.path)?'tracking':ROLL.test(req.path)?'reports':'';if(!f)return next();
  const u=userOf(req.cookies.t);if(!u)return next();const m=(db.prepare('SELECT modules FROM schools WHERE id=?').get(u.school_id).modules||'reports,fees,tracking').split(',');
@@ -321,7 +321,7 @@ require('./owners')(app);REF(app);require('./ai')(app,{auth,E,audit:(u,a,d)=>aud
 const SCx=0;require('./phase4')(app,{auth,userOf,E,audit,school,tx,isGate});
 require('./dash')(app,{auth,school});
 require('./roll')(app,{auth,E,audit,school});
-require('./imp')(app,{auth,E,audit,school});require('./imp-t')(app,{auth,E,audit,school,hash,SC,M:require('./mail')});
+require('./help')(app,{auth,E});require('./imp')(app,{auth,E,audit,school});require('./imp-t')(app,{auth,E,audit,school,hash,SC,M:require('./mail')});
 require('./honour')(app,{auth,E,audit,school});
 require('./sections')(app,{auth,E,audit});
 require('./examapi')(app,{auth,E,audit,school});

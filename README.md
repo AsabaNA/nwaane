@@ -658,3 +658,14 @@ Settings → Report cards → **Page design**: the pattern along the top and bot
 - `carddeco.js` holds each design as a list of shapes (rect / circle / polygon, in mm, for the top edge of an A4 page); the bottom edge is the same drawing mirrored. The PDF (`pdf.js`, `strips()`) and the previews in Settings (SVG) draw from the same shapes, so the picker matches the print. Designs stay within 7 mm of each edge, clear of the header and footer.
 - Stored in `schools.card_design`. `GET /api/card/designs` lists the shapes; `POST /api/settings/card` takes an optional `design` (omit it to keep the current one); `GET /api/report/preview?design=` previews a design without saving.
 - To add a design: add an entry to `DESIGNS` in `carddeco.js` and its names (`cd_d_<id>`, EN/FR) in `public/cardset.js`.
+
+## Help center
+
+Signed-in users get **Help center** at the bottom of the left sidebar: a search box, topic cards, most-popular tutorials, and for each tutorial an embedded YouTube video, a glanceable step flow (or a plain article) and a "Did this help you?" button.
+
+- Each tutorial has four videos: computer or phone, English or French. The reader gets the one matching their screen (under 820 px = phone) and their app language; if one is missing it falls back to the closest version. Small toggles under the video let them switch.
+- Videos are embedded through youtube-nocookie.com. Paste a normal YouTube link in the owners' console; the id is extracted and validated.
+- Owners' console → **Help**: overview (views, % helpful, searches that found nothing), tutorial editor (EN/FR text, steps with screenshots, optional article, keywords, default format), categories (add, edit, reorder, hide, delete with "move tutorials to"), and the contact numbers shown under "Still stuck?" (hidden when empty).
+- Three starter tutorials (import students, download report cards, show only students who owe fees) are created as **drafts** with steps in both languages and no videos. Nothing is visible to users until you publish.
+- Screenshots are resized in the browser to 300 KB or less and stored in the database (`/help-img/:id`).
+- Demo and support sessions are read-only and cannot vote.
