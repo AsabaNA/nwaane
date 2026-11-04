@@ -32,6 +32,8 @@ const acr=n=>String(n).split(/\s+/).filter(Boolean).map(w=>/\d/.test(w)?w.toUppe
 for(const c of db.prepare("SELECT id,name FROM classes WHERE short IS NULL OR short=''").all())db.prepare('UPDATE classes SET short=? WHERE id=?').run(acr(c.name),c.id);
 try{db.exec('ALTER TABLE students ADD COLUMN fee_discount INTEGER DEFAULT 0')}catch{}
 try{db.exec("ALTER TABLE schools ADD COLUMN card_rule TEXT DEFAULT 'all'")}catch{}
+try{db.exec("ALTER TABLE schools ADD COLUMN fee_mode TEXT DEFAULT 'terms'")}catch{}
+db.exec('CREATE TABLE IF NOT EXISTS fee_deadline(school_id INTEGER NOT NULL,class_id INTEGER NOT NULL,date TEXT NOT NULL,PRIMARY KEY(school_id,class_id))');
 try{db.exec("ALTER TABLE schools ADD COLUMN card_fees INTEGER DEFAULT 1")}catch{}
 db.exec(`
 CREATE TABLE IF NOT EXISTS fee_plan(school_id INTEGER NOT NULL,class_id INTEGER NOT NULL REFERENCES classes(id),term INTEGER NOT NULL,amount INTEGER NOT NULL,PRIMARY KEY(class_id,term));

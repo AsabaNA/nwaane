@@ -321,7 +321,7 @@ require('./owners')(app);REF(app);require('./ai')(app,{auth,E,audit:(u,a,d)=>aud
 const SCx=0;require('./phase4')(app,{auth,userOf,E,audit,school,tx,isGate});
 require('./dash')(app,{auth,school});
 require('./roll')(app,{auth,E,audit,school});
-require('./help')(app,{auth,E});require('./imp')(app,{auth,E,audit,school});require('./imp-t')(app,{auth,E,audit,school,hash,SC,M:require('./mail')});
+require('./help')(app,{auth,E});require('./staffpdf')(app,{auth,E,school});require('./imp')(app,{auth,E,audit,school});require('./imp-t')(app,{auth,E,audit,school,hash,SC,M:require('./mail')});
 require('./honour')(app,{auth,E,audit,school});
 require('./sections')(app,{auth,E,audit});
 require('./examapi')(app,{auth,E,audit,school});

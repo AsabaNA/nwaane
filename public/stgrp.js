@@ -1,0 +1,41 @@
+// Staff page: group the list by teacher, class or subject, jump between groupings from any chip, and download a group (or the whole view) as PDF.
+const SG={view:'teacher',f:'',cls:null};
+Object.assign(D.en,{sg_by:'Group by',sg_t:'Teacher',sg_c:'Class',sg_s:'Subject',sg_dl:'Download list',sg_dlg:'Download PDF',sg_all:'All subjects & classes',sg_allc:'All classes',sg_alls:'All subjects',sg_ph:'Search staff, class or subject…',sg_ns:'[n] subjects',sg_ns1:'1 subject',sg_nt:'[n] teachers',sg_nt1:'1 teacher',sg_none:'No teacher assigned yet',sg_nomatch:'No matches',sg_tip:'Click any class or subject chip to jump to that grouping. In “Class” view, each class shows every teacher and the subject they teach there, which makes gaps and overlaps easy to spot.',sg_head:'Class head',sg_filter:'Filter'});
+Object.assign(D.fr,{sg_by:'Grouper par',sg_t:'Enseignant',sg_c:'Classe',sg_s:'Matière',sg_dl:'Télécharger la liste',sg_dlg:'Télécharger en PDF',sg_all:'Toutes matières et classes',sg_allc:'Toutes les classes',sg_alls:'Toutes les matières',sg_ph:'Rechercher personnel, classe ou matière…',sg_ns:'[n] matières',sg_ns1:'1 matière',sg_nt:'[n] enseignants',sg_nt1:'1 enseignant',sg_none:'Aucun enseignant affecté',sg_nomatch:'Aucun résultat',sg_tip:'Cliquez sur une pastille de classe ou de matière pour passer à ce regroupement. Dans la vue « Classe », chaque classe montre tous ses enseignants et la matière qu’ils y enseignent, pour repérer les manques et les doublons.',sg_head:'Titulaire',sg_filter:'Filtrer'});
+const sgNat=(a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'});
+const sgBase=()=>{let a=STAFF;if(typeof SFS!='undefined'&&SFS&&typeof scMulti=='function'&&scMulti())a=a.filter(x=>x.role!='teacher'||(x.sections||[]).includes(SFS));if(SF.role)a=a.filter(x=>x.role==SF.role);return a};
+// one row per (teacher, subject): the classes where they teach it
+const sgItems=u=>{const m=new Map();for(const c of u.classes||[])for(const s of c.subjects){if(!m.has(s))m.set(s,[]);m.get(s).push({cid:c.cid,cl:c.short||c.cls,full:c.cls})}return[...m].map(([s,c])=>({s,c:c.sort((a,b)=>sgNat(a.cl,b.cl))})).sort((a,b)=>sgNat(a.s,b.s))};
+const sgHas=(u,it,q)=>!q||[u.name,u.username,it?it.s:'',...(it?it.c.map(x=>x.cl):[])].join(' ').toLowerCase().includes(q);
+const sgChip=(label,kind,title)=>`<button type=button class="chip sfk sg-chip" onclick="sgGo('${kind}',this.dataset.t)" data-t="${esc(label)}" title="${esc(title||label)}">${esc(label)}</button>`;
+const sgUser=u=>`<span class=sf-av aria-hidden=true>${esc(initials(u.name))}</span><a href=# class=sg-nm onclick="tvOpen(${u.id});return false">${esc(u.name)}</a>`;
+function sgOpts(){const a=sgBase().filter(x=>x.role=='teacher'),subs=new Set(),cls=new Map();for(const u of a)for(const c of u.classes||[]){cls.set(c.short||c.cls,1);c.subjects.forEach(s=>subs.add(s))}
+ const S=[...subs].sort(sgNat),C=[...cls.keys()].sort(sgNat),v=SG.view,o=v=='class'?C:v=='subject'?S:[...S,...C];
+ return`<option value="">${t(v=='class'?'sg_allc':v=='subject'?'sg_alls':'sg_all')}`+o.map(x=>`<option ${x==SG.f?'selected':''}>${esc(x)}`).join('')}
+function sgBar(){const tb=document.querySelector('#m .tb');if(!tb||$('#sg_seg'))return;
+ const q=tb.querySelector('input');if(q)q.placeholder=t('sg_ph');
+ tb.insertAdjacentHTML('beforeend',`<select id=sg_f onchange="SG.f=this.value;sfRows()" aria-label="${t('sg_filter')}">${sgOpts()}</select><div class=sg-seg id=sg_seg role=group aria-label="${t('sg_by')}"><span class=sg-lbl>${t('sg_by')}</span>${[['teacher','sg_t'],['class','sg_c'],['subject','sg_s']].map(([k,l])=>`<button type=button data-v=${k} class="${SG.view==k?'on':''}" onclick="sgGo('${k}')">${t(l)}</button>`).join('')}</div><button type=button class=sg-dlm id=sg_dl onclick="sgPdf('')">${fi('dl',18)} ${t('sg_dl')}</button>`)}
+function sgGo(v,f){SG.view=v;SG.f=f||'';document.querySelectorAll('#sg_seg button').forEach(b=>b.classList.toggle('on',b.dataset.v==v));const s=$('#sg_f');if(s)s.innerHTML=sgOpts();sfRows()}
+function sgPdf(g){const q=(SF.q||'').trim(),u=`/api/staff/pdf?view=${SG.view}&group=${encodeURIComponent(g||'')}&q=${encodeURIComponent(q)}&filter=${encodeURIComponent(SG.f)}&section=${typeof SFS!='undefined'?SFS:0}&lang=${L}`;
+ const a=document.createElement('a');a.href=u;a.download='';document.body.appendChild(a);a.click();a.remove()}
+async function sgClasses(){if(SG.cls)return SG.cls;const r=await api('classes');SG.cls=r.ok?r.d:[];return SG.cls}
+const sgCnt=(n,k)=>t(n==1?k+'1':k).replace('[n]',n);
+async function sgRender(){const q=(SF.q||'').toLowerCase().trim(),f=SG.f,tch=sgBase(),v=SG.view,out=$('#sl');let groups=[];
+ if(v=='class'){const cls=await sgClasses(),inS=c=>!(typeof SFS!='undefined'&&SFS&&typeof scMulti=='function'&&scMulti())||c.section_id==SFS,by=new Map(cls.filter(inS).sort((a,b)=>sgNat(a.name,b.name)).map(c=>[c.short||c.name,{k:c.short||c.name,full:c.name,head:null,rows:[]}]));
+  for(const u of tch)for(const it of sgItems(u))for(const c of it.c)if(sgHas(u,{s:it.s,c:[c]},q)||sgHas(u,it,q)){if(!by.has(c.cl))by.set(c.cl,{k:c.cl,full:c.full,head:null,rows:[]});by.get(c.cl).rows.push({s:it.s,u})}
+  for(const u of STAFF)for(const c of u.classes||[])if(c.head&&by.has(c.short||c.cls))by.get(c.short||c.cls).head=u.name;
+  groups=[...by.values()].filter(g=>(!f||g.k==f)&&(g.rows.length||!q)).map(g=>({...g,note:g.rows.length?sgCnt(new Set(g.rows.map(r=>r.s)).size,'sg_ns')+' · '+sgCnt(new Set(g.rows.map(r=>r.u.id)).size,'sg_nt'):'',rows:g.rows.sort((a,b)=>sgNat(a.s,b.s)||sgNat(a.u.name,b.u.name))}))}
+ else{const by=new Map();for(const u of tch)for(const it of sgItems(u))if(sgHas(u,it,q)){if(!by.has(it.s))by.set(it.s,{k:it.s,rows:[]});by.get(it.s).rows.push({u,c:it.c})}
+  groups=[...by.values()].sort((a,b)=>sgNat(a.k,b.k)).filter(g=>!f||g.k==f).map(g=>({...g,note:sgCnt(g.rows.length,'sg_nt'),rows:g.rows.sort((a,b)=>sgNat(a.u.name,b.u.name))}))}
+ out.innerHTML=(groups.length?groups.map(g=>`<details class=sg-g open><summary><span class=sg-gn>${esc(g.k)}</span>${v=='class'&&g.head?`<span class=sg-tag title="${esc(t('sg_head'))}">${esc(t('sg_head'))}: ${esc(g.head)}</span>`:''}<span class=sg-ct>${esc(g.note)}</span><button type=button class=sg-dl data-g="${esc(g.k)}" onclick="event.preventDefault();event.stopPropagation();sgPdf(this.dataset.g)">${fi('dl',15)} ${t('sg_dl')}</button></summary>
+  <div class=sg-tw><table class=sg-t><tr><th>${t(v=='class'?'sg_s':'sg_t')}<th>${t(v=='class'?'sg_t':'sf_clsh')}${g.rows.map(r=>v=='class'?`<tr><td>${sgChip(r.s,'subject')}<td>${sgUser(r.u)}`:`<tr><td>${sgUser(r.u)}<td>${r.c.map(c=>sgChip(c.cl,'class',c.full)).join('')}`).join('')||`<tr><td colspan=2 class=sg-gap>${t('sg_none')}`}</table></div></details>`).join(''):`<section class="dp sf-card"><p class=none style="padding:20px">${t('sg_nomatch')}</p></section>`)+`<p class="sg-note noprint">${fi('bulb',16)} ${t('sg_tip')}</p>`}
+// teacher view keeps the existing table (all staff, edit and delete); search also matches subjects and classes; the chips jump to a grouping
+{const o=sfRows;sfRows=function(){if(!$('#sg_seg')&&$('#m .tb'))sgBar();
+ if(SG.view!='teacher'){sgRender();return}
+ const all=STAFF,q=(SF.q||'').toLowerCase().trim(),f=SG.f,keep=x=>{const its=sgItems(x);return(!q||sgHas(x,null,q)||its.some(it=>sgHas(x,it,q)))&&(!f||its.some(it=>it.s==f||it.c.some(c=>c.cl==f)))},qs=SF.q;
+ STAFF=all.filter(keep);SF.q='';try{o()}finally{STAFF=all;SF.q=qs}
+ // make the chips of the table clickable
+ sgChips()}}
+function sgChips(){document.querySelectorAll('#sl .sft tr').forEach(tr=>{const td=tr.children,w=tr.querySelector('.sf-who');if(!w||td.length<6)return;const m=/tvOpen\((\d+)\)/.exec(w.getAttribute('onclick')||''),u=m&&STAFF.find(x=>x.id==+m[1]);if(!u)return;
+  const its=sgItems(u);td[3].innerHTML=its.length?`<div class=sf-chips>${its.map(it=>sgChip(it.s,'subject')).join('')}</div>`:'<span class=muted>—</span>';
+  td[4].innerHTML=(u.classes||[]).length?`<div class=sf-chips>${[...u.classes].sort((a,b)=>sgNat(a.cls,b.cls)).map(c=>`<button type=button class="chip sfk sg-chip${c.head?' head':''}" onclick="sgGo('class',this.dataset.t)" data-t="${esc(c.short||c.cls)}" title="${esc(c.cls)}${c.head?' · '+t('sf_head'):''}">${esc(c.short||c.cls)}</button>`).join('')}</div>`:'<span class=muted>—</span>'})}

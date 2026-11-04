@@ -6,13 +6,14 @@ const METHODS=['cash','momo','om','bank','other'];
 db.exec('CREATE TABLE IF NOT EXISTS fee_opening(school_id INTEGER NOT NULL,student_id INTEGER PRIMARY KEY REFERENCES students(id),amount INTEGER NOT NULL,at TEXT)');
 function rows(sid,{class_id=null,q='',id=null}={}){
  const plan={};for(const p of db.prepare('SELECT class_id,term,amount FROM fee_plan WHERE school_id=?').all(sid))(plan[p.class_id]??=[0,0,0])[p.term-1]=p.amount;
+ const dl=Object.fromEntries(db.prepare('SELECT class_id,date FROM fee_deadline WHERE school_id=?').all(sid).map(r=>[r.class_id,r.date]));
  const paid=Object.fromEntries(db.prepare('SELECT student_id,SUM(amount) a FROM payments WHERE school_id=? AND void=0 GROUP BY student_id').all(sid).map(r=>[r.student_id,r.a])),
  open=Object.fromEntries(db.prepare('SELECT student_id,amount FROM fee_opening WHERE school_id=?').all(sid).map(r=>[r.student_id,r.amount])),
  rel={};for(const r of db.prepare('SELECT student_id,term FROM releases WHERE school_id=?').all(sid))(rel[r.student_id]??=new Set()).add(r.term);
  const f='%'+q+'%';
  return db.prepare('SELECT s.id,s.name,s.matricule,s.guardian,s.phone,s.class_id,s.fee_discount disc,c.name cls,COALESCE(c.short,c.name) cs FROM students s JOIN classes c ON c.id=s.class_id WHERE s.school_id=? AND s.active=1 AND (? IS NULL OR s.class_id=?) AND (? IS NULL OR s.id=?) AND (s.name LIKE ? OR s.matricule LIKE ?) ORDER BY c.name,s.name').all(sid,class_id,class_id,id,id,f,f).map(s=>{
   const per=(plan[s.class_id]||[0,0,0]).map(a=>a>0?Math.max(0,a-s.disc):0);per[0]+=open[s.id]||0;let c=0;const due=per.map(x=>c+=x),p=paid[s.id]||0;
-  return{...s,per,due,paid:p,bal:due.map(d=>d-p),released:[1,2,3].map(t=>!!rel[s.id]?.has(t))}})}
+  return{...s,deadline:dl[s.class_id]||'',per,due,paid:p,bal:due.map(d=>d-p),released:[1,2,3].map(t=>!!rel[s.id]?.has(t))}})}
 const status=(r,term)=>r.due[term-1]==0?'nofee':r.bal[term-1]<=0?'paid':r.paid>0?'partial':'unpaid';
 // students whose report card must be held back (rule = paid only, balance through that term > 0, not released)
 function blocked(sid,cid,term){const out=new Set();if(!(db.prepare('SELECT modules FROM schools WHERE id=?').get(sid).modules||'reports,fees,tracking').includes('fees'))return out;if((db.prepare('SELECT card_rule FROM schools WHERE id=?').get(sid).card_rule||'all')!='paid')return out;
@@ -24,18 +25,21 @@ module.exports=(app,{auth,E,audit,school})=>{
 const FE=auth(['principal','secretary']),ADM=auth(['principal']),sid=req=>req.user.school_id,ok=(res,x={})=>res.json({ok:1,...x}),int=(v,a,b)=>Number.isInteger(+v)&&v!==''&&v!==null&&+v>=a&&+v<=b;
 const term=req=>[1,2,3].includes(+req.query.term)?+req.query.term:1;
 app.get('/api/fees/plan',FE,(req,res)=>{const m={};for(const p of db.prepare('SELECT class_id,term,amount FROM fee_plan WHERE school_id=?').all(sid(req)))(m[p.class_id]??=[0,0,0])[p.term-1]=p.amount;
- res.json({rule:school(req).card_rule||'all',rw:school(req).receipt_w||80,classes:db.prepare('SELECT id,name FROM classes WHERE school_id=? ORDER BY name').all(sid(req)).map(c=>({...c,t:m[c.id]||[0,0,0]}))})});
+ const dl=Object.fromEntries(db.prepare('SELECT class_id,date FROM fee_deadline WHERE school_id=?').all(sid(req)).map(r=>[r.class_id,r.date]));
+ res.json({mode:school(req).fee_mode||'terms',rule:school(req).card_rule||'all',rw:school(req).receipt_w||80,classes:db.prepare('SELECT id,name FROM classes WHERE school_id=? ORDER BY name').all(sid(req)).map(c=>({...c,t:m[c.id]||[0,0,0],total:(m[c.id]||[0,0,0]).reduce((a,b)=>a+b,0),deadline:dl[c.id]||''}))})});
+app.post('/api/fees/mode',ADM,(req,res)=>{if(!['terms','total'].includes(req.body.mode))return E(res,400,'invalid');db.prepare('UPDATE schools SET fee_mode=? WHERE id=?').run(req.body.mode,sid(req));audit(req.user,'fees.mode',req.body.mode);ok(res)});
 app.post('/api/fees/plan',ADM,(req,res)=>{const{class_id,amounts}=req.body,ids=req.body.all?db.prepare('SELECT id FROM classes WHERE school_id=?').all(sid(req)).map(c=>c.id):db.prepare('SELECT id FROM classes WHERE id=? AND school_id=?').all(+class_id||0,sid(req)).map(c=>c.id);
- if(!ids.length||!Array.isArray(amounts)||amounts.length!=3||!amounts.every(a=>int(a,0,5000000)))return E(res,400,'invalid');
- tx(()=>{for(const c of ids)amounts.forEach((a,i)=>db.prepare('INSERT OR REPLACE INTO fee_plan(school_id,class_id,term,amount) VALUES(?,?,?,?)').run(sid(req),c,i+1,+a))})();audit(req.user,'fees.plan',ids.length+' classes '+amounts.join('/'));ok(res)});
+ const dline=req.body.deadline==null?null:String(req.body.deadline);
+ if(!ids.length||!Array.isArray(amounts)||amounts.length!=3||!amounts.every(a=>int(a,0,5000000))||(dline!==null&&dline!==''&&!/^\d{4}-\d\d-\d\d$/.test(dline)))return E(res,400,'invalid');
+ tx(()=>{for(const c of ids){amounts.forEach((a,i)=>db.prepare('INSERT OR REPLACE INTO fee_plan(school_id,class_id,term,amount) VALUES(?,?,?,?)').run(sid(req),c,i+1,+a));if(dline!==null){if(dline)db.prepare('INSERT OR REPLACE INTO fee_deadline(school_id,class_id,date) VALUES(?,?,?)').run(sid(req),c,dline);else db.prepare('DELETE FROM fee_deadline WHERE school_id=? AND class_id=?').run(sid(req),c)}}})();audit(req.user,'fees.plan',ids.length+' classes '+amounts.join('/'));ok(res)});
 app.post('/api/fees/rule',ADM,(req,res)=>{if(!['all','paid'].includes(req.body.rule))return E(res,400,'invalid');db.prepare('UPDATE schools SET card_rule=? WHERE id=?').run(req.body.rule,sid(req));audit(req.user,'fees.rule',req.body.rule);ok(res)});
-app.get('/api/fees/list',FE,(req,res)=>{const t=term(req),r=rows(sid(req),{class_id:+req.query.class_id||null,q:String(req.query.q||'').slice(0,60)}).map(x=>({id:x.id,name:x.name,matricule:x.matricule,cls:x.cls,cs:x.cs,cid:x.class_id,guardian:x.guardian,phone:x.phone,due:x.due[t-1],paid:x.paid,bal:x.bal[t-1],status:status(x,t),released:x.released[t-1]}));
- const owing=r.filter(x=>x.bal>0);res.json({term:t,rows:r,totals:{due:r.reduce((a,x)=>a+x.due,0),paid:r.reduce((a,x)=>a+Math.min(x.paid,x.due),0),owed:owing.reduce((a,x)=>a+x.bal,0),owing:owing.length,students:r.length}})});
+app.get('/api/fees/list',FE,(req,res)=>{const t=(school(req).fee_mode=='total')?3:term(req),r=rows(sid(req),{class_id:+req.query.class_id||null,q:String(req.query.q||'').slice(0,60)}).map(x=>({id:x.id,name:x.name,matricule:x.matricule,cls:x.cls,cs:x.cs,cid:x.class_id,guardian:x.guardian,phone:x.phone,deadline:x.deadline,due:x.due[t-1],paid:x.paid,bal:x.bal[t-1],status:status(x,t),released:x.released[t-1]}));
+ const owing=r.filter(x=>x.bal>0);res.json({term:t,mode:school(req).fee_mode||'terms',rows:r,totals:{due:r.reduce((a,x)=>a+x.due,0),paid:r.reduce((a,x)=>a+Math.min(x.paid,x.due),0),owed:owing.reduce((a,x)=>a+x.bal,0),owing:owing.length,students:r.length}})});
 // money collected per month (last n months, voided payments left out)
 app.get('/api/fees/trend',FE,(req,res)=>{const n=Math.min(12,Math.max(2,+req.query.n||6)),end=require('./sched').clock(school(req)).date.slice(0,7),ms=[];let y=+end.slice(0,4),m=+end.slice(5,7);for(let i=0;i<n;i++){ms.unshift(y+'-'+String(m).padStart(2,'0'));if(--m<1){m=12;y--}}
  const q=db.prepare("SELECT COALESCE(SUM(amount),0) a FROM payments WHERE school_id=? AND void=0 AND date LIKE ?");res.json({months:ms,amounts:ms.map(k=>q.get(sid(req),k+'%').a)})});
 app.get('/api/fees/student',FE,(req,res)=>{const r=rows(sid(req),{id:+req.query.id||0})[0];if(!r)return E(res,404,'invalid');const nm=Object.fromEntries(db.prepare('SELECT id,name FROM users WHERE school_id=?').all(sid(req)).map(u=>[u.id,u.name]));
- res.json({...r,status:[1,2,3].map(t=>status(r,t)),payments:db.prepare('SELECT * FROM payments WHERE student_id=? ORDER BY receipt DESC').all(r.id).map(p=>({id:p.id,receipt:p.receipt,amount:p.amount,date:p.date,method:p.method,ref:p.ref,void:p.void,void_reason:p.void_reason,by:nm[p.by_id]||''}))})});
+ res.json({...r,mode:school(req).fee_mode||'terms',status:[1,2,3].map(t=>status(r,t)),payments:db.prepare('SELECT * FROM payments WHERE student_id=? ORDER BY receipt DESC').all(r.id).map(p=>({id:p.id,receipt:p.receipt,amount:p.amount,date:p.date,method:p.method,ref:p.ref,void:p.void,void_reason:p.void_reason,by:nm[p.by_id]||''}))})});
 app.post('/api/fees/pay',FE,(req,res)=>{const{student_id,amount,method,ref=''}=req.body,s=db.prepare('SELECT id FROM students WHERE id=? AND school_id=? AND active=1').get(+student_id||0,sid(req)),today=SC.clock(school(req)).date,date=req.body.date||today;
  if(!s||!int(amount,1,10000000)||!METHODS.includes(method)||String(ref).length>40||!SC.isDate(date)||date>today)return E(res,400,'invalid');
  const out=tx(()=>{const n=db.prepare('SELECT COALESCE(MAX(receipt),0)+1 n FROM payments WHERE school_id=?').get(sid(req)).n;

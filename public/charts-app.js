@@ -31,13 +31,7 @@ function lsDist(){const g=(LS.data||[]).filter(x=>x.avg!=null);if(g.length<2)ret
 {const o=stDraw;stDraw=function(first){o(first);const d=SO2.d,ts=(d.terms||[]).filter(x=>x.avg!=null);document.querySelectorAll('.ovc .ch-in').forEach(x=>x.remove());if(ts.length<2)return;
  const card=chCard({id:'ch_trm',cls:'ch-in',title:t('ch_trm'),sub:t('ch_trm_s'),body:chLine(ts.map(x=>t('term')+' '+x.term),[{name:d.name.split(' ')[0],v:ts.map(x=>+cm1(x.avg))},{name:t('ch_class'),v:ts.map(x=>x.class_avg==null?null:+cm1(x.class_avg))}],{max:20,fmt:cm1,label:t('ch_trm')}),legend:chLegend([d.name.split(' ')[0],t('ch_class')],[CH.c1,CH.c2]),table:{head:[t('ch_term'),d.name,t('ch_class')],rows:ts.map(x=>[x.term,cm1(x.avg),x.class_avg==null?'—':cm1(x.class_avg)])}}),a=document.querySelector('.ovc .ovtr');if(a){a.insertAdjacentHTML('afterend',card);const sv=[...document.querySelectorAll('.ovc .ch-in svg')].map(x=>[x,(x.viewBox&&x.viewBox.baseVal.width)||0]).sort((a,b)=>b[1]-a[1])[0];if(sv&&sv[1]>150){const g=sv[0];g.setAttribute('preserveAspectRatio','none');g.style.cssText='width:100%;height:130px;max-height:none'}}}}
 // ---- fees page: collected and owing by class, and money per month
-async function feCharts(){const host=document.getElementById('fm');if(!host||!FE.data)return;const rows=FE.data.rows||[],sig=rows.reduce((a,r)=>a+r.paid,0)+'|'+rows.length+'|'+FE.term;if(FE._chs==sig&&document.getElementById('fch'))return;FE._chs=sig;
- let h=document.getElementById('fch');if(!h){host.insertAdjacentHTML('afterend','<div class="ch-grid noprint" id=fch></div>');h=document.getElementById('fch')}
- const by={};for(const r of rows){const k=r.cls,x=by[k]=by[k]||{l:k,p:0,o:0};x.p+=Math.min(r.paid,r.due);x.o+=Math.max(0,r.bal)}const it=Object.values(by).filter(x=>x.p+x.o>0).sort((a,b)=>a.l.localeCompare(b.l));
- const tr=await api('fees/trend?n=6'),cards=[];
- if(it.length)cards.push(chCard({id:'ch_fcl',title:t('ch_fcl'),sub:t('ch_fcl_s')+' · '+t('term')+' '+FE.term+' · FCFA',body:chBar(it.map(x=>({l:x.l,v:[x.p,x.o]})),{names:[t('ch_coll'),t('ch_owe')],colors:[CH.c1,CH.red],fmt:cfm,label:t('ch_fcl')}),legend:chLegend([t('ch_coll'),t('ch_owe')],[CH.c1,CH.red]),table:{head:[t('ch_class'),t('ch_coll'),t('ch_owe')],rows:it.map(x=>[x.l,cfm(x.p),cfm(x.o)])}}));
- if(tr.ok&&tr.d.amounts.some(a=>a>0))cards.push(chCard({id:'ch_ftr',title:t('ch_ftr'),sub:t('ch_ftr_s'),body:chLine(tr.d.months.map(m=>m.slice(5)+'/'+m.slice(2,4)),[{name:t('ch_amt'),v:tr.d.amounts}],{fmt:cfm,label:t('ch_ftr')}),table:{head:[t('ch_month'),t('ch_amt')],rows:tr.d.months.map((m,i)=>[m,cfm(tr.d.amounts[i])])}}));
- h.innerHTML=cards.join('')}
+async function feCharts(){} // the two charts on the payments page were removed
 {const o=feCollect;feCollect=async function(){await o();FE._chs='';feCharts()}}
 {const o=feRefresh;feRefresh=function(){o();feCharts()}}
 // ---- roll call: absences per day (office staff)
