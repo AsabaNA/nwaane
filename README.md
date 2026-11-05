@@ -675,3 +675,9 @@ Signed-in users get **Help center** at the bottom of the left sidebar: a search 
 
 ## Fapshi payments
 `fapshi.js` + `public/pay.js` + `public/owners-fapshi.js`. See FAPSHI.md for the setup and go-live steps.
+
+## Privacy Policy and Terms of Use
+`public/privacy.html` and `public/terms.html` (English + French, one page each, language switch). They are linked from the storefront footer and the sign-up consent line, and read the contact address from `public/store-config.js`. Have a Cameroonian lawyer review them before relying on them.
+
+## Settings page
+`public/setx.js` builds the five-tab Settings card (School profile, Academic calendar, Card design, Honour roll, Support) and regroups the cards other files add (roll call, accounting, AI, data download, support access). Optional `whatsapp` and `phone` in `public/store-config.js` show contact cards on the Support tab.

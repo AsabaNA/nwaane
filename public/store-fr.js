@@ -178,6 +178,8 @@ window.STORE_FR={
 "Contact us": "Nous contacter",
 "© 2026 Meridian. All rights reserved.": "© 2026 Meridian. Tous droits réservés.",
 "English · Français": "English · Français",
+"Privacy Policy": "Politique de confidentialité",
+"Terms of Use": "Conditions d’utilisation",
 "Smiling students in uniform in a sunny classroom in Cameroon": "Élèves souriants en uniforme dans une salle de classe ensoleillée au Cameroun",
 "Principal reviewing a report card with a parent and student": "Un directeur examine un bulletin avec un parent et un élève",
 "Bursar handing a printed receipt to a parent": "Un économe remet un reçu imprimé à un parent",
