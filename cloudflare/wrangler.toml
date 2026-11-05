@@ -38,9 +38,3 @@ NODE_ENV = "production"
 "__dirname" = "'/app'"             # path.join(__dirname,'public',...) in the sendFile calls; the file is read from the assets binding
 
 # Secrets (never in this file):  wrangler secret put ADMIN_KEY   (data move-in)   /   RESEND_API_KEY   /   MAIL_FROM   /   PUBLIC_URL
-
-# ...
-[vars]
-EMAIL = "benysont@gmail.com"
-NODE_ENV = "production"
-# ...
