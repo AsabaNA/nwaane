@@ -37,8 +37,13 @@ function routes(app,{auth,E,audit}){
  // Fapshi -> us. The body is only a hint: we always confirm with Fapshi before recording anything.
  app.post('/api/fapshi/webhook',async(req,res)=>{const sec=process.env.FAPSHI_WEBHOOK_SECRET;if(sec&&!eq(req.get('x-wh-secret'),sec))return res.status(401).json({error:'auth'});
   const id=req.body&&req.body.transId;try{if(id)await settle(id)}catch(e){console.error('fapshi webhook',e.message)}res.json({ok:1})})}   // settle BEFORE answering: on Cloudflare, work after the response may be cut off, and Fapshi does not retry
-function ownerApi(R,{need,E}){const MONEY=['owner','finance'];
+function ownerApi(R,{need,E,log}){const MONEY=['owner','finance'];
  R.get('/fapshi',need(MONEY),(req,res)=>{const L=db.prepare('SELECT t.*,s.name school,i.number FROM fapshi_tx t JOIN schools s ON s.id=t.school_id JOIN invoices i ON i.id=t.invoice_id ORDER BY t.id DESC LIMIT 200').all();
-  const ok=L.filter(x=>x.settled);res.json({on:configured(),live:live(),webhook:!!process.env.FAPSHI_WEBHOOK_SECRET,total:ok.reduce((a,x)=>a+x.amount,0),fees:ok.reduce((a,x)=>a+(x.revenue!=null?x.amount-x.revenue:0),0),rows:L.map(x=>({id:x.id,at:x.created,school:x.school,invoice:x.number,amount:x.amount,status:x.status,medium:x.medium||'',ref:x.trans_id||'',revenue:x.revenue}))})});
+  const ok=L.filter(x=>x.settled);res.json({schools:db.prepare('SELECT id,name,code FROM schools ORDER BY name').all(),on:configured(),live:live(),webhook:!!process.env.FAPSHI_WEBHOOK_SECRET,total:ok.reduce((a,x)=>a+x.amount,0),fees:ok.reduce((a,x)=>a+(x.revenue!=null?x.amount-x.revenue:0),0),rows:L.map(x=>({id:x.id,at:x.created,school:x.school,invoice:x.number,amount:x.amount,status:x.status,medium:x.medium||'',ref:x.trans_id||'',revenue:x.revenue}))})});
+ // a small invoice to try Fapshi end to end (minimum 100 FCFA); void it afterwards from the Invoices tab
+ R.post('/fapshi/test-invoice',need(['owner']),(req,res)=>{const sc=db.prepare('SELECT * FROM schools WHERE id=?').get(+req.body.school_id),a=Math.round(+req.body.amount);if(!sc)return E(res,404,'none');if(!(a>=100&&a<=5000))return E(res,400,'amount');
+  const d=SC.clock(sc).date,n=db.prepare("SELECT COUNT(*)+1 n FROM invoices WHERE school_id=? AND term=9").get(sc.id).n;
+  db.prepare("INSERT INTO invoices(school_id,year,term,number,modules,students,teachers,lines,gross,discount,amount,status,created,issued,due) VALUES(?,?,9,?,'',0,0,?,?,0,?,'sent',?,?,?)").run(sc.id,B.schoolYear(d),'TEST-'+String(sc.id).padStart(4,'0')+'-'+n+'-'+Date.now().toString(36).slice(-3),JSON.stringify([{k:'min',qty:1,unit:a,per:'test',amount:a}]),a,a,d,d,SC.addDays(d,30));
+  log&&log(req.o,'invoice.test',sc.id,a+' FCFA');res.json({ok:1})});
  R.post('/fapshi/:id/check',need(MONEY),async(req,res)=>{const x=db.prepare('SELECT trans_id FROM fapshi_tx WHERE id=?').get(+req.params.id);if(!x||!x.trans_id)return E(res,404,'none');const r=await settle(x.trans_id);res.json({status:r.status,settled:!!r.settled})})}
 module.exports={routes,ownerApi,settle,configured};
