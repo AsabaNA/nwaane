@@ -17,7 +17,7 @@ function harden(app){
    'Content-Security-Policy':"frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'"});
   if(req.secure||PROD)res.set('Strict-Transport-Security','max-age=15552000');
   // block cross-site writes: a browser-sent Origin must be this site
-  if(!/^(GET|HEAD|OPTIONS)$/.test(req.method)){const o=req.get('origin');if(o){let h='';try{h=new URL(o).host}catch{}if(h!=req.get('host'))return res.status(403).json({error:'origin'})}}
+  if(!/^(GET|HEAD|OPTIONS)$/.test(req.method)&&req.path!='/api/fapshi/webhook'){const o=req.get('origin');if(o){let h='';try{h=new URL(o).host}catch{}if(h!=req.get('host'))return res.status(403).json({error:'origin'})}}
   next()});
 }
 module.exports={same,cookieOpts,hit,clear,harden,PROD};

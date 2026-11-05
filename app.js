@@ -26,10 +26,11 @@ const auth=(roles=[],free=false)=>(req,res,next)=>{
 const OUT=/^\/api\/(report(\/pdf|\/share)?|hours(\/pdf)?|fees\/receipt\/pdf|classes\/stats|dashboard|honour\/pdf|acct\/export|tprofile(\/.*)?)$/;
 const LK=req=>!req.user.support&&B.lockedOut(req.user.school_id);
 const READ_OK=/^\/api\/(report\/publish|logout|help\/vote)$/; // term-end report cards are never blocked
-const TRK=/^\/api\/(structure|closed|unavail|timetable|mytimetable|classes\/qr|qr|today|gate|lesson|spot|hours|rates|myhours)(\/|$)/,FEE=/^\/api\/fees(\/|$)/,ROLL=/^\/api\/(roll|honour)(\/|$)/;
-app.use((req,res,next)=>{const f=FEE.test(req.path)?'fees':TRK.test(req.path)?'tracking':ROLL.test(req.path)?'reports':'';if(!f)return next();
- const u=userOf(req.cookies.t);if(!u)return next();const m=(db.prepare('SELECT modules FROM schools WHERE id=?').get(u.school_id).modules||'reports,fees,tracking').split(',');
- m.includes(f)?next():E(res,403,'module')});
+const PL=require('./plan');   // module gate: a school only reaches the features of the modules in its plan
+app.use((req,res,next)=>{const n=PL.need(req.path);if(!n)return next();
+ const u=userOf(req.cookies.t);if(!u)return next();PL.sweep(u.school_id);const m=(db.prepare('SELECT modules FROM schools WHERE id=?').get(u.school_id).modules||'reports,fees,tracking').split(',');
+ PL.allowed(m,n)?next():res.status(403).json({error:'module',need:n.mods,mode:n.mode})});
+PL.routes(app,{auth,E,audit});require('./fapshi').routes(app,{auth,E,audit});
 app.use('/api',(req,res,next)=>{if(req.method!='GET'){const u=userOf(req.cookies.t);if(u)res.on('finish',()=>{if(res.statusCode<300)try{B.touchPeak(u.school_id);BK.countWrite();if(!/^\/api\/(login|logout|auth|ai\/chat|me)/.test(req.path))require('./core/memo').clear(u.school_id)}catch{}})}next()}); // keep the term's peak counts current
 const strong=p=>typeof p=='string'&&p.length>=8;
 // --- schools & login
@@ -63,7 +64,7 @@ app.post('/api/login',async(req,res)=>{const{code='',username='',password=''}=re
  const tk=A2.make({user_id:u.id,kind:'login'}),s=await A2.sendCode(A2.get(tk),u.email,lang,u.email_ok?'login':'verify');
  res.json({step:'code',ticket:tk,hint:A2.hint(u.email),sent:s=='ok'})});
 A2.routes(app,{session,audit});
-app.get('/api/me',auth([],true),(req,res)=>{const u=req.user;const sc=school(req),ck=SC.clock(sc);res.json({uid:u.id,gate:isGate(u),demo:!!sc.demo,now:ck,can_gate:!!u.can_gate,heads:db.prepare('SELECT COUNT(*) n FROM classes WHERE head_id=?').get(u.id).n,seqs:R.seqs(school(req)),year:school(req).year,name:u.name,role:u.role,roll:school(req).roll_mode||'off',honour:!!school(req).hr_on,sections:SECT.ensure(req.user.school_id).length,school:u.school,code:u.scode,demo_ro:String(req.cookies.t||'').startsWith('dm_'),support:u.support?{owner:u.support_owner,expires:u.support_expires}:null,modules:(school(req).modules||'reports,fees,tracking').split(','),ai:require('./ai').flag(u),bill:B.status(u.school_id),readonly:!!B.gate(u.school_id),active:true})});
+app.get('/api/me',auth([],true),(req,res)=>{const u=req.user;PL.sweep(u.school_id);const sc=school(req),ck=SC.clock(sc);res.json({uid:u.id,gate:isGate(u),demo:!!sc.demo,now:ck,can_gate:!!u.can_gate,heads:db.prepare('SELECT COUNT(*) n FROM classes WHERE head_id=?').get(u.id).n,seqs:R.seqs(school(req)),year:school(req).year,name:u.name,role:u.role,roll:school(req).roll_mode||'off',honour:!!school(req).hr_on,sections:SECT.ensure(req.user.school_id).length,school:u.school,code:u.scode,demo_ro:String(req.cookies.t||'').startsWith('dm_'),support:u.support?{owner:u.support_owner,expires:u.support_expires}:null,modules:(school(req).modules||'reports,fees,tracking').split(','),ai:require('./ai').flag(u),bill:B.status(u.school_id),readonly:!!B.gate(u.school_id),active:true})});
 app.post('/api/logout',auth([],true),(req,res)=>{if(req.user.support){db.prepare('UPDATE support_sessions SET ended=? WHERE id=?').run(now(),req.user.support_id);res.clearCookie('t');return res.json({ok:1})}
  db.prepare('DELETE FROM sessions WHERE token=?').run(req.cookies.t);res.clearCookie('t');res.json({ok:1})});
 // --- classes (principal manages)

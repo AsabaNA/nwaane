@@ -66,7 +66,7 @@ R.post('/schools/:id/note',need(),(req,res)=>{const s=db.prepare('SELECT * FROM 
 R.post('/schools/:id/action',need(),(req,res)=>{const s=db.prepare('SELECT * FROM schools WHERE id=?').get(+req.params.id);if(!s)return E(res,404,'none');const{action,reason,until,modules,pct}=req.body,role=req.o.role;
  if(!reasonOk(reason))return E(res,400,'reason');const money=['discount','lock','unlock'].includes(action);if(money?!MONEY.includes(role)||role!='owner':!SCH.includes(role))return E(res,403,'role');
  if(action=='extend'){if(!isD(until)||until<=(s.trial_ends||'').slice(0,10))return E(res,400,'date');db.prepare('UPDATE schools SET trial_ends=? WHERE id=?').run(until,s.id);log(req.o,'school.extend',s.id,`until ${until}: ${reason}`)}
- else if(action=='modules'){const m=B.MODS.filter(x=>(modules||[]).includes(x));if(!m.length)return E(res,400,'modules');db.prepare('UPDATE schools SET modules=? WHERE id=?').run(m.join(','),s.id);log(req.o,'school.modules',s.id,`${m.join(',')}: ${reason}`)}
+ else if(action=='modules'){const m=B.MODS.filter(x=>(modules||[]).includes(x));if(!m.length)return E(res,400,'modules');db.prepare('UPDATE schools SET modules=?,mod_off=NULL WHERE id=?').run(m.join(','),s.id);log(req.o,'school.modules',s.id,`${m.join(',')}: ${reason}`)}
  else if(action=='readonly'||action=='cancel'){db.prepare('UPDATE schools SET flag=? WHERE id=?').run(action=='cancel'?'cancelled':'readonly',s.id);if(action=='cancel')db.prepare('DELETE FROM sessions WHERE user_id IN(SELECT id FROM users WHERE school_id=?)').run(s.id);log(req.o,'school.'+action,s.id,reason)}
  else if(action=='reactivate'){db.prepare("UPDATE schools SET flag='' WHERE id=?").run(s.id);log(req.o,'school.reactivate',s.id,reason)}
  else if(action=='discount'){const p=Math.round(+pct);if(!(p>=0&&p<=100))return E(res,400,'pct');db.prepare('UPDATE schools SET discount_pct=? WHERE id=?').run(p,s.id);log(req.o,'school.discount',s.id,`${p}%: ${reason}`)}
@@ -163,7 +163,7 @@ R.post('/announcements',need(['owner']),(req,res)=>{const b=req.body,t=s=>String
 R.post('/announcements/:id/end',need(['owner']),(req,res)=>{db.prepare('UPDATE announcements SET active=0 WHERE id=?').run(+req.params.id);log(req.o,'announcement.end',null,String(req.params.id));res.json({ok:1})});
 // ---- audit (owners only)
 R.get('/audit',need(['owner']),(req,res)=>res.json({valid:chainOk(),rows:db.prepare('SELECT id,at,owner_name,action,school_id,detail FROM owner_audit ORDER BY id DESC LIMIT 300').all().map(r=>({...r,school:r.school_id?(db.prepare('SELECT name FROM schools WHERE id=?').get(r.school_id)||{}).name:''}))}));
-require('./ai').ownerApi(R,{need,log,E});require('./referral').ownerApi(R,{need,log,E});require('./help').ownerApi(R,{need,log,E});
+require('./ai').ownerApi(R,{need,log,E});require('./referral').ownerApi(R,{need,log,E});require('./help').ownerApi(R,{need,log,E});require('./fapshi').ownerApi(R,{need,E});
 app.use('/owners/api',express.json(),R);
 app.get('/owners',(req,res)=>res.sendFile(require('path').join(__dirname,'public','owners.html')));
 };

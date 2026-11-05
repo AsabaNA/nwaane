@@ -6,7 +6,7 @@ function bcTrail(){const f=VIEWNOW;if(!f||!S)return[];const m=menuOf(),it=m.find
  if(f=='vClasses'&&typeof CLS!='undefined'){const multi=(typeof scMulti=='function'&&scMulti()),cn=CLS.open&&(CLS.c||[]).find(k=>k.id==CLS.open),out=[];
   if(multi){out.push({t:t('sc_all'),f:'scBack()'});const sn=CLS.sec&&((SCT||{}).sections||[]).find(x=>x.id==CLS.sec);if(sn)out.push({t:sn.name,f:`scOpen(${CLS.sec})`})}
   else out.push({t:title,f:'clBack()'});if(cn)out.push({t:cn.name});return out}
- if(f=='vTT'&&typeof TW!='undefined'&&twAdm()&&(S.modules||['reports','fees','tracking']).includes('tracking')){const k=TW.scr=='view'?'list':TW.scr=='wiz'||TW.scr=='res'?'new':TW.scr;return[{t:title,f:"twTab('list')"},{t:t('tw_tab_'+k).replace(/^\+ /,'')}]}
+ if(f=='vTT'&&typeof TW!='undefined'&&twAdm()&&(S.modules||['reports','fees','tracking']).some(m=>m=='tracking'||m=='reports')){const k=TW.scr=='view'?'list':TW.scr=='wiz'||TW.scr=='res'?'new':TW.scr;return[{t:title,f:"twTab('list')"},{t:t('tw_tab_'+k).replace(/^\+ /,'')}]}
  return[{t:title}]}
 function bcDraw(){const n=$('#bcb');if(!n)return;let a=[];try{a=bcTrail()}catch{}
  n.innerHTML=a.map((x,i)=>{const last=i==a.length-1;return(i?'<i aria-hidden=true>›</i>':'')+(last||!x.f?`<span${last?' aria-current=page':''}>${esc(x.t)}</span>`:`<button type=button onclick="${x.f}">${esc(x.t)}</button>`)}).join('');n.hidden=!a.length}

@@ -42,7 +42,7 @@ const tcs=id=>{if(id&&TPAL.ok&&TPAL.idx[id]!=null)return palStyle(TPAL.idx[id]);
 const tchLbl=(id,name)=>{const l=TPAL.loads[id];return esc(name)+(l?' — '+esc(l.length>90?l.slice(0,88)+'…':l):'')};
 const twHm=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const twAdm=()=>S.role=='principal';
-const twTrk=()=>(S.modules||['reports','fees','tracking']).includes('tracking');
+const twTrk=()=>(S.modules||['reports','fees','tracking']).some(m=>m=='tracking'||m=='reports');
 // ---------- unsaved changes: a suggested timetable that is not used yet, or a school day being edited
 const twDirty=()=>!!(TW.prop&&TW.scr=='res')||!!TW.stDirty;
 const twLeave=()=>{if(!twDirty())return true;if(!confirm(t('tw_leave')))return false;TW.prop=null;TW.stDirty=0;TW.st=null;TW.edit2=0;TW.calEdit=0;TW.stHost=null;return true};

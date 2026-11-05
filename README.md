@@ -669,3 +669,9 @@ Signed-in users get **Help center** at the bottom of the left sidebar: a search 
 - Three starter tutorials (import students, download report cards, show only students who owe fees) are created as **drafts** with steps in both languages and no videos. Nothing is visible to users until you publish.
 - Screenshots are resized in the browser to 300 KB or less and stored in the database (`/help-img/:id`).
 - Demo and support sessions are read-only and cannot vote.
+
+## Plan and module gate
+`plan.js` maps API routes to modules (A reports, B fees, C tracking; timetable = A or C; teacher report cards = all three) and blocks other routes with `403 {error:'module'}`. A principal can add a module on the **My Plan** page or from a locked page (billed on the term invoice) and remove one only with a zero balance; the removal takes effect after the end of the term (`schools.mod_off`), after that term's invoice is drafted.
+
+## Fapshi payments
+`fapshi.js` + `public/pay.js` + `public/owners-fapshi.js`. See FAPSHI.md for the setup and go-live steps.

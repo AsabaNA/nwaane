@@ -1,0 +1,8 @@
+// Owners' console: online payments received through Fapshi.
+async function vFap(){const r=await api('fapshi');if(!r.ok)return $('#m').innerHTML=`<p class=err>${em(r)}</p>`;const d=r.d;
+ const chip=s=>`<span class="chip ${s=='SUCCESSFUL'?'ok':s=='FAILED'||s=='EXPIRED'||s=='MISMATCH'?'bad':'warn'}">${s}</span>`;
+ $('#m').innerHTML=`<h1>Payments</h1><p class=sub>Schools paying their Meridian invoices through Fapshi (MTN Mobile Money and Orange Money). School fee money never passes through here.</p>
+ ${d.on?'':'<div class="box warn"><b>Fapshi is not connected.</b> Set the secrets FAPSHI_API_USER and FAPSHI_API_KEY (and FAPSHI_WEBHOOK_SECRET), then redeploy. Schools see no Pay button until then.</div>'}
+ <div class="grid g4"><div class=stat><p>Mode</p><b>${d.live?'Live':'Test'}</b></div><div class=stat><p>Webhook secret</p><b>${d.webhook?'Set':'Not set'}</b></div><div class=stat><p>Received</p><b>${fm(d.total)}</b></div><div class=stat><p>Fapshi fees (3%)</p><b>${fm(d.fees)}</b></div></div>
+ <div class=card><div class=tw><table><thead><tr><th>Date</th><th>School</th><th>Invoice</th><th class=num>Amount</th><th>Status</th><th>Method</th><th>Reference</th><th></th></tr></thead><tbody>${d.rows.map(x=>`<tr><td>${esc((x.at||'').slice(0,16).replace('T',' '))}</td><td>${esc(x.school)}</td><td>${esc(x.invoice)}</td><td class=num>${fm(x.amount)}</td><td>${chip(x.status)}</td><td>${esc(x.medium)}</td><td><small>${esc(x.ref)}</small></td><td>${['SUCCESSFUL','MISMATCH'].includes(x.status)||!x.ref?'':`<button class="b sm" onclick="fapChk(${x.id})">Check</button>`}</td></tr>`).join('')||'<tr><td colspan=8>No online payments yet.</td></tr>'}</tbody></table></div></div>`}
+async function fapChk(id){await api('fapshi/'+id+'/check',{});vFap()}

@@ -1329,3 +1329,8 @@ button.sg-chip{cursor:pointer;font-family:inherit}button.sg-chip:hover{border-co
 @media(min-width:821px) and (max-width:1360px){.tb.sg-tb>select{flex:1 1 0;min-width:84px;max-width:130px;font-size:13px}.tb.sg-tb>.srch{flex:1 1 0;min-width:90px}.tb.sg-tb>.sg-seg button{font-size:13px!important}.tb.sg-tb>.sg-dd .sg-dlm{font-size:13px}}
 @media(min-width:821px) and (max-width:1000px){.tb.sg-tb>.sg-dd .sg-dlm .sg-dtx,.tb.sg-tb>.sg-dd .sg-car{display:none}}
 @media(min-width:821px) and (max-width:1199px){.tb.sg-tb{flex-wrap:wrap}.tb.sg-tb>.srch{flex:1 1 200px;max-width:none}}
+/* Plan: locked pages and modules panel */
+.fr-it.fr-lk{opacity:.72}.fr-it .fr-pad{margin-left:auto;display:inline-flex;opacity:.8}.fr.col .fr-pad{display:none}
+.pl-box{display:flex;gap:14px;align-items:flex-start;margin:0 0 16px}.pl-box p{margin:4px 0 0}
+.pl-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.pl-ul{margin:8px 0 12px;padding-left:20px}.pl-ul li{margin:4px 0}
+.pl-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--m-line,#e5e7eb)}.pl-row>div{flex:1 1 200px}.pl-row small{display:block;color:#64748b}

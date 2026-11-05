@@ -52,7 +52,7 @@ function grid(r,cell){const rows=[...r.periods.map(p=>({...p,k:'p'})),...r.break
 const slotMap=r=>{const m={};for(const s of r.slots)m[s.day+':'+s.period]=s;return m};
 // ----- timetable (principal edits; secretary / surveillant view)
 let TT={tab:'cls',date:'',cid:0,tid:0,blocks:null};
-function vTT(tab){const adm=S.role=='principal',trk=(S.modules||['reports','fees','tracking']).includes('tracking');if(!trk&&adm)TT.tab='ex';if(tab)TT.tab=tab;let tabs=[['cls','x_tcls'],['tch','x_ttch'],...(adm?[['str','x_tstr'],['av','x_tav'],['cl','x_tcl'],['gen','x_tgen'],['ex','x_texam']]:[])];if(!trk&&adm)tabs=[['ex','x_texam']];
+function vTT(tab){const adm=S.role=='principal',trk=(S.modules||['reports','fees','tracking']).some(m=>m=='tracking'||m=='reports');if(!trk&&adm)TT.tab='ex';if(tab)TT.tab=tab;let tabs=[['cls','x_tcls'],['tch','x_ttch'],...(adm?[['str','x_tstr'],['av','x_tav'],['cl','x_tcl'],['gen','x_tgen'],['ex','x_texam']]:[])];if(!trk&&adm)tabs=[['ex','x_texam']];
  $('#m').innerHTML=`<h1>${t('timetable')}</h1><div class=noprint>${seg(tabs.map(([k,l])=>[k,t(l)]),TT.tab,'vTT')}</div><div id=tt></div>`;
  return{cls:ttCls,tch:ttTch,str:ttStr,av:ttAv,cl:ttCl,gen:ttGen,ex:ettMain}[TT.tab]()}
 const dateBox=()=>`<label class=df>${t('x_date')} <input type=date id=td value="${TT.date}" onchange="TT.date=this.value;vTT()"></label>`;

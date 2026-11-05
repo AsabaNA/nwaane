@@ -57,7 +57,7 @@ CREATE INDEX IF NOT EXISTS i_lessons_date ON lessons(school_id,date);CREATE INDE
 `);
 
 // ---- Phase 6a: plans & billing
-for(const c of["modules TEXT DEFAULT 'reports,fees,tracking'","discount_pct INTEGER DEFAULT 0","term_dates TEXT","price_lock_until TEXT"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
+for(const c of["modules TEXT DEFAULT 'reports,fees,tracking'","discount_pct INTEGER DEFAULT 0","term_dates TEXT","price_lock_until TEXT","mod_off TEXT"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
 for(const c of["ref_id INTEGER","ref_until TEXT"])try{db.exec('ALTER TABLE schools ADD COLUMN '+c)}catch{}
 db.exec(`CREATE TABLE IF NOT EXISTS referrers(id INTEGER PRIMARY KEY,code TEXT UNIQUE NOT NULL,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,phone TEXT DEFAULT '',pw TEXT NOT NULL,email_ok INTEGER DEFAULT 0,active INTEGER DEFAULT 1,created TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS referrer_sessions(token TEXT PRIMARY KEY,referrer_id INTEGER NOT NULL,created TEXT DEFAULT CURRENT_TIMESTAMP);
