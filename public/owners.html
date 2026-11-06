@@ -151,5 +151,5 @@ async function vNews(){const r=await api('announcements');if(!r.ok)return;const 
 async function newAnn(){const r=await api('announcements',{title_en:$('#ae').value,title_fr:$('#af').value,body_en:$('#be').value,body_fr:$('#bf').value,starts:$('#as').value,ends:$('#ad').value,level:$('#al').value});r.ok?vNews():$('#ne').textContent=em(r)}
 // ---- audit
 async function vAudit(){const r=await api('audit');if(!r.ok)return;$('#m').innerHTML=`<h1>Activity log</h1><p class=sub>Every owner action. Entries cannot be edited or deleted, and each one is chained to the one before.</p><div class=tb><span class="chip ${r.d.valid?'ok':'bad'}">${r.d.valid?'Chain intact':'Chain broken: entries were tampered with'}</span></div><div class=card><div class=scroll><table><tr><th>When<th>Who<th>Action<th>School<th>Detail</tr>${r.d.rows.map(a=>`<tr><td class=mono>${a.at.slice(0,16).replace('T',' ')}<td>${esc(a.owner_name)||'system'}<td><b>${esc(a.action)}</b><td>${esc(a.school)}<td>${esc(a.detail)}`).join('')}</table></div></div>`}
-boot();
+addEventListener("DOMContentLoaded",boot);
 </script><script src=/help-md.js></script><script src=/owners-help.js></script><script src=/owners-fapshi.js></script></body></html>

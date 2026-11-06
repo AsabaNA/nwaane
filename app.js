@@ -232,6 +232,16 @@ app.post('/api/settings/card',auth(['principal']),(req,res)=>{const{c1,c2='',lan
  if(logo!==undefined)db.prepare('UPDATE schools SET card_logo=? WHERE id=?').run(logo||null,sid);audit(req.user,'school.card');res.json({ok:1})});
 app.get('/api/card/designs',auth(['principal']),(req,res)=>res.json({ids:require('./carddeco').IDS,svg:Object.fromEntries(require('./carddeco').IDS.map(i=>[i,require('./carddeco').shapes(i)]))}));
 app.get('/api/report/preview',auth(['principal']),async(req,res,next)=>{try{await P.preview(res,{sc:{...school(req),...(require('./carddeco').IDS.includes(req.query.design)?{card_design:req.query.design}:{})},n:Math.max(1,Math.min(30,+req.query.n||8)),lang:['en','fr','both'].includes(req.query.lang)?req.query.lang:null,term:[1,2,3].includes(+req.query.term)?+req.query.term:1})}catch(e){next(e)}});
+app.post('/api/report/preview',auth(['principal']),async(req,res,next)=>{try{const b=req.body||{},x=school(req),o={};
+ if(b.c1!==undefined){if(!HEX.test(b.c1||'')||lum(b.c1)>.5)return E(res,400,'color');o.card_c1=b.c1.toLowerCase()}
+ if(b.c2!==undefined){if(b.c2&&!HEX.test(b.c2))return E(res,400,'color');o.card_c2=(b.c2||'').toLowerCase()}
+ if(b.lang!==undefined){if(!['en','fr','both'].includes(b.lang))return E(res,400,'invalid');o.card_lang=b.lang}
+ if(b.design!==undefined){if(!require('./carddeco').IDS.includes(b.design))return E(res,400,'invalid');o.card_design=b.design}
+ if(b.logo!==undefined){if(b.logo&&!logoOk(b.logo))return E(res,400,'logo');o.card_logo=b.logo||null}
+ if(typeof b.fees=='boolean')o.card_fees=b.fees?1:0;
+ if(typeof b.honour=='boolean'&&b.honour&&!x.hr_on){o.hr_on=1;if(!R.hrTiers({...x,hr_on:1}).length)o.hr_tiers=JSON.stringify([{name:'',min:14}])}
+ if(b.honour===false)o.hr_on=0;
+ await P.preview(res,{sc:{...x,...o},n:Math.max(1,Math.min(30,+b.n||8)),lang:o.card_lang||null,term:[1,2,3].includes(+b.term)?+b.term:1})}catch(e){next(e)}});
 app.post('/api/settings',auth(['principal']),(req,res)=>{const{name='',header='',year='',seq_plan='',terms}=req.body,x=school(req);
  const okT=!terms||(Array.isArray(terms)&&terms.length==3&&terms.every((r,i)=>Array.isArray(r)&&SC.isDate(r[0])&&SC.isDate(r[1])&&r[0]<r[1]&&(!i||terms[i-1][1]<r[0])));
  if(!okT)return E(res,400,'dates');

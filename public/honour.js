@@ -8,7 +8,7 @@ Object.assign(D.fr,{hr_h:'Tableau d’honneur',hr_p:'Facultatif. Les élèves qu
 let HON={on:false,tiers:[],top:0,nofail:0};
 const hrRows=()=>HON.tiers.map((x,i)=>`<div class=hr-r><input type=text maxlength=30 value="${esc(x.name)}" placeholder="${t('hr_nameph')}" aria-label="${t('hr_name')} ${i+1}" oninput="HON.tiers[${i}].name=this.value"><input type=number step=0.25 min=0 max=20 value="${x.min}" aria-label="${t('hr_min')} ${i+1}" oninput="HON.tiers[${i}].min=this.value"><button type=button class=sb onclick="HON.tiers.splice(${i},1);hrTiers()" ${HON.tiers.length<2?'disabled':''}>${t('hr_rm')}</button></div>`).join('');
 function hrTiers(){$('#hr_t').innerHTML=hrRows();$('#hr_a').hidden=HON.tiers.length>=3}
-function hrToggle(on){HON.on=on;if(on&&!HON.tiers.length)HON.tiers=[{name:'',min:14}];$('#hr_b').hidden=!on;hrTiers()}
+function hrToggle(on){HON.on=on;try{CD.hon=on;cdSync()}catch{}if(on&&!HON.tiers.length)HON.tiers=[{name:'',min:14}];$('#hr_b').hidden=!on;hrTiers()}
 function hrDrawSec(h){const html=`<section class=dp id=hrsec><h2>${t('hr_h')}</h2><p class=hint>${t('hr_p')}</p>
  <label class="cdo hr-on"><input type=checkbox id=hr_on ${HON.on?'checked':''} onchange="hrToggle(this.checked)"><span>${t('hr_on')}</span></label>
  <div id=hr_b ${HON.on?'':'hidden'}><h3 class=sub>${t('hr_lv')}</h3><p><small>${t('hr_lvh')}</small></p><div class="hr-r hr-hd" aria-hidden=true><span>${t('hr_name')}</span><span>${t('hr_min')}</span><span></span></div><div id=hr_t>${hrRows()}</div><p><button type=button class=sb id=hr_a onclick="HON.tiers.push({name:'',min:''});hrTiers()" ${HON.tiers.length>=3?'hidden':''}>${fi('add',16)} ${t('hr_add')}</button></p>

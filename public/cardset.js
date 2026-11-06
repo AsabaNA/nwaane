@@ -3,33 +3,6 @@ Object.assign(D.en,{cd_h:'Report card design',cd_p:'How your school’s report c
 Object.assign(D.fr,{cd_h:'Présentation des bulletins',cd_p:'L’aspect des bulletins de votre école à l’impression.',cd_logo:'Logo de l’école',cd_logo_h:'PNG ou JPG. Il est réduit automatiquement. Un logo carré ou haut convient le mieux.',cd_up:'Téléverser le logo',cd_rm:'Supprimer le logo',cd_c1:'Couleur principale',cd_c1h:'Bandes du haut et du bas, titres et lignes du tableau. Choisissez une couleur foncée : elle sert aussi pour le texte.',cd_c2:'Deuxième couleur (facultative)',cd_c2h:'Le fin liseré à côté de chaque bande. Laissez vide pour une teinte plus claire de la couleur principale.',cd_none:'Aucune',cd_lang:'Langues sur le bulletin',cd_en:'Anglais seulement',cd_fr:'Français seulement',cd_both:'Anglais et français',cd_save:'Enregistrer',cd_prev:'Bulletin d’exemple',cd_n:'Matières dans l’exemple',cd_open:'Ouvrir l’exemple dans un nouvel onglet',cd_ok:'Présentation enregistrée.',e_color:'Les couleurs doivent ressembler à #1e5d46.',e_too_light:'La couleur principale est trop claire. Choisissez-en une plus foncée pour garder le texte lisible.',e_logo:'Le logo doit être un PNG ou JPG de moins de 150 Ko.',cd_big:'L’image est trop volumineuse même réduite. Essayez une image plus simple.'});
 Object.assign(D.en,{cd_fee:'Show fees owing',cd_feeh:'Prints the amount the student still owes, next to the class council remarks. Fees owing are counted up to the term of the report card.',cd_feen:'Your school’s plan does not include fees, so there is nothing to show.'});
 Object.assign(D.fr,{cd_fee:'Afficher les frais dus',cd_feeh:'Imprime le montant que l’élève doit encore, à côté des observations du conseil de classe. Les frais dus sont comptés jusqu’au trimestre du bulletin.',cd_feen:'L’offre de votre école n’inclut pas les frais : il n’y a rien à afficher.'});
-const CD={design:'bars',logo:'',c1:'#1e5d46',c2:'',lang:'both',n:8,fees:true,has_fees:true};
-async function cardDraw(){const sec0=$('#m .sg section');if(!sec0)return;const s=(await api('settings')).d;Object.assign(CD,s.card);CD0={n:s.name,h:s.header,y:s.year};
- const h=`<section class=dp id=cdsec><h2>${t('cd_h')}</h2><p class=hint>${t('cd_p')}</p>
- <div class=cdl><div class=cdbox id=cdbox></div><div><label>${t('cd_logo')}</label><div class=fa style="justify-content:flex-start;gap:10px;flex-wrap:wrap;margin:6px 0"><button type=button class=sb onclick="$('#cdfile').click()">${fi('plus',16)} ${t('cd_up')}</button><button type=button class=sb id=cdrm onclick="cdLogo('')">${t('cd_rm')}</button></div><small>${t('cd_logo_h')}</small><input type=file id=cdfile accept="image/png,image/jpeg" hidden onchange="cdPick(this.files[0])"></div></div>
- <div class=fg><div><label for=cdc1>${t('cd_c1')}</label><div class=cdc><input type=color id=cdc1 value="${CD.c1}" oninput="CD.c1=this.value;$('#cdh1').value=this.value"><input id=cdh1 value="${CD.c1}" maxlength=7 oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){CD.c1=this.value;$('#cdc1').value=this.value}"></div><small>${t('cd_c1h')}</small></div>
- <div><label for=cdc2>${t('cd_c2')}</label><div class=cdc><input type=color id=cdc2 value="${CD.c2||'#d2ab5a'}" oninput="CD.c2=this.value;$('#cdh2').value=this.value"><input id=cdh2 value="${CD.c2}" maxlength=7 placeholder="${t('cd_none')}" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){CD.c2=this.value;$('#cdc2').value=this.value}else if(!this.value)CD.c2=''"><button type=button class=sb onclick="CD.c2='';$('#cdh2').value=''">${t('cd_none')}</button></div><small>${t('cd_c2h')}</small></div></div>
- <div class=fw style="margin-top:12px"><label>${t('cd_lang')}</label><div class=cdr>${['en','fr','both'].map(k=>`<label class=cdo><input type=radio name=cdlang value=${k} ${CD.lang==k?'checked':''} onchange="CD.lang=this.value"><span>${t('cd_'+k)}</span></label>`).join('')}</div></div>
- <div class=fw style="margin-top:12px"><label class=cdo style="display:flex;gap:8px;align-items:center"><input type=checkbox id=cdfee ${CD.fees&&CD.has_fees?'checked':''} ${CD.has_fees?'':'disabled'} onchange="CD.fees=this.checked"><span>${t('cd_fee')}</span></label><small>${CD.has_fees?t('cd_feeh'):t('cd_feen')}</small></div>
- <div class=fa style="justify-content:flex-start;gap:10px;flex-wrap:wrap"><button type=button onclick="cdSave()">${fi('check',18)} ${t('cd_save')}</button></div><div id=cdres></div>
- <div class=cdp><div class=cdph><b>${t('cd_prev')}</b><label>${t('cd_n')} <select id=cdn onchange="CD.n=+this.value;cdPrev()">${[2,3,5,8,12,17,22].map(n=>`<option ${n==CD.n?'selected':''}>${n}</option>`).join('')}</select></label><a class=sb id=cdopen target=_blank rel=noopener>${t('cd_open')}</a></div><iframe id=cdfr title="${t('cd_prev')}"></iframe></div></section>`;
- const old=$('#cdsec');if(old)old.outerHTML=h;else sec0.insertAdjacentHTML('afterend',h);cdBox();cdPrev()}
-function cdBox(){$('#cdbox').innerHTML=CD.logo?`<img src="${CD.logo}" alt="">`:`<span>${fi('cap',28)}</span>`;$('#cdrm').style.display=CD.logo?'':'none'}
-function cdPrev(){const u=`/api/report/preview?n=${CD.n}&v=${Date.now()}`;$('#cdfr').src=u+'#toolbar=0&navpanes=0';$('#cdopen').href=u}
-function cdLogo(v){CD.logo=v;cdBox()}
-function cdPick(f){if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const m=400,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);
-  let u=c.toDataURL('image/png');if(u.length>190e3){x.globalCompositeOperation='destination-over';x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);u=c.toDataURL('image/jpeg',.85)}
-  if(u.length>190e3){$('#cdres').innerHTML=`<p class="box bad">${t('cd_big')}</p>`;return}cdLogo(u);$('#cdres').innerHTML=''};im.src=r.result};r.readAsDataURL(f);$('#cdfile').value=''}
-let CD0={};
-// "Save design" also saves the school name, year and "under the name" lines if they were edited above (they have their own Save button, which was easy to miss)
-async function cdSave(){const f=['sn2','hd','yr'].map(i=>($('#'+i)||{}).value||'');let note='';
- if(CD0.n!==undefined&&(f[0]!==CD0.n||f[1]!==CD0.h||f[2]!==CD0.y)){await ss();if(!/box ok/.test($('#res').innerHTML)){$('#cdres').innerHTML=$('#res').innerHTML;return}CD0={n:f[0],h:f[1],y:f[2]};note=1}
- return cdSave2(note)}
-async function cdSave2(note){const r=await api('settings/card',{c1:CD.c1,c2:CD.c2,lang:CD.lang,logo:CD.logo||null,fees:!!CD.fees});$('#cdres').innerHTML=r.ok?`<p class="box ok">${t('cd_ok')}</p>`:`<p class="box bad">${em(r.s,r.d.error)}</p>`;if(r.ok)cdPrev()}
-{const o=vSettings;vSettings=async function(){await o();await cardDraw()}}
-// the sample card shows the school name and "under the name" lines: redraw it once those are saved too
-{const o=ss;ss=async function(){await o();if(/box ok/.test(($('#res')||{}).innerHTML||''))cdPrev()}}
-
 // ---- page edge design (top and bottom): small previews drawn from the same shapes the PDF uses
 Object.assign(D.en,{cd_d:'Page design',cd_dh:'The pattern along the top and bottom edge of the card. It uses your two colours.',cd_d_bars:'Classic bars',cd_d_circles:'Circles',cd_d_triangles:'Triangles',cd_d_diamonds:'Diamonds',cd_d_waves:'Waves',cd_d_dots:'Dots',cd_d_mosaic:'Mosaic'});
 Object.assign(D.fr,{cd_d:'Motif de la page',cd_dh:'Le motif le long du haut et du bas du bulletin. Il utilise vos deux couleurs.',cd_d_bars:'Barres classiques',cd_d_circles:'Cercles',cd_d_triangles:'Triangles',cd_d_diamonds:'Losanges',cd_d_waves:'Vagues',cd_d_dots:'Pois',cd_d_mosaic:'Mosaïque'});
@@ -37,10 +10,64 @@ let CDS=null;
 const cdMix=(a,b,k)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),x=p(a),y=p(b);return'#'+x.map((v,i)=>Math.round(v*(1-k)+y[i]*k).toString(16).padStart(2,'0')).join('')};
 function cdSvg(id,flip){const c1=CD.c1,c2=CD.c2||cdMix(c1,'#ffffff',.55),col={c1,c2,t:cdMix('#ffffff',c1,.06)},f=x=>col[x.c];
  return`<svg viewBox="0 0 56 7" aria-hidden="true" ${flip?'style="transform:scaleY(-1)"':''}>`+(CDS[id]||[]).map(s=>s.t=='r'?`<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" fill="${f(s)}"/>`:s.t=='c'?`<circle cx="${s.x}" cy="${s.y}" r="${s.r}" fill="${f(s)}"/>`:`<polygon points="${s.pts.map(p=>p.map(v=>+v.toFixed(2)).join(',')).join(' ')}" fill="${f(s)}"/>`).join('')+'</svg>'}
+
+Object.assign(D.en,{cdw_logo:'School logo',cdw_logoh:'PNG or JPG. Square or tall works best.',cdw_des:'Page design',cdw_edge:'Top & bottom edge pattern',cdw_col:'Colours',cdw_main:'Main',cdw_sec:'Second (optional)',cdw_colh:'Main colour is used for strips, headings and text — pick a dark one.',cdw_lang:'Language on the card',cdw_en:'English',cdw_fr:'French',cdw_both:'Both',cdw_show:'What to show',cdw_fee:'Fees owing',cdw_feeh:'Next to class council remarks, up to the card’s term.',cdw_hon:'Honour roll badge',cdw_honh:'Based on term average (annual in Term 3). Levels are set in the Honour roll tab.',cdw_saved:'✓ All changes saved',cdw_unsaved:'Unsaved changes',cdw_reset:'Reset',cdw_prev:'Preview',cdw_live:'LIVE',cdw_subj:'Subjects',cdw_new:'Open in new tab ↗',cdw_print:'Print',cdw_zin:'Zoom in',cdw_zout:'Zoom out',cdw_load:'Updating preview…',cdw_err:'The preview could not be drawn.'});
+Object.assign(D.fr,{cdw_logo:'Logo de l’école',cdw_logoh:'PNG ou JPG. Un logo carré ou haut convient le mieux.',cdw_des:'Motif de la page',cdw_edge:'Motif du haut et du bas',cdw_col:'Couleurs',cdw_main:'Principale',cdw_sec:'Deuxième (facultative)',cdw_colh:'La couleur principale sert aux bandes, titres et textes — choisissez une couleur foncée.',cdw_lang:'Langue du bulletin',cdw_en:'Anglais',cdw_fr:'Français',cdw_both:'Les deux',cdw_show:'À afficher',cdw_fee:'Frais dus',cdw_feeh:'À côté des observations du conseil de classe, jusqu’au trimestre du bulletin.',cdw_hon:'Badge du tableau d’honneur',cdw_honh:'Selon la moyenne du trimestre (annuelle au trimestre 3). Les niveaux se règlent dans l’onglet Tableau d’honneur.',cdw_saved:'✓ Tout est enregistré',cdw_unsaved:'Modifications non enregistrées',cdw_reset:'Réinitialiser',cdw_prev:'Aperçu',cdw_live:'EN DIRECT',cdw_subj:'Matières',cdw_new:'Ouvrir dans un onglet ↗',cdw_print:'Imprimer',cdw_zin:'Agrandir',cdw_zout:'Réduire',cdw_load:'Mise à jour de l’aperçu…',cdw_err:'L’aperçu n’a pas pu être dessiné.'});
+const CD={design:'bars',logo:'',c1:'#1e5d46',c2:'',lang:'both',n:8,fees:true,has_fees:true,hon:false,hon0:false,z:100,dirty:0};
+let CD0={},CDT=0,CDQ=0,CDU='';
+async function cardDraw(){const sec0=$('#m .sg section');if(!sec0)return;const s=(await api('settings')).d;Object.assign(CD,s.card,{hon:!!(s.honour&&s.honour.on),dirty:0,z:CD.z||100});CD.hon0=CD.hon;CD0={n:s.name,h:s.header,y:s.year};
+ const h=`<section class=cdw id=cdsec>
+ <div class="cdw-l"><div class=cdw-sc>
+  <div class=cdw-s><h3>${t('cdw_logo')}</h3><div class=cdw-row><div class=cdbox id=cdbox></div><div><button type=button class=cdw-b onclick="$('#cdfile').click()">${t('cd_up')}</button> <button type=button class=cdw-b id=cdrm onclick="cdLogo('')">${t('cd_rm')}</button><p class=cdw-h>${t('cdw_logoh')}</p></div></div><input type=file id=cdfile accept="image/png,image/jpeg" hidden onchange="cdPick(this.files[0])"></div>
+  <div class=cdw-s><h3>${t('cdw_des')} <em>${t('cdw_edge')}</em></h3><div class=cdd id=cdd></div></div>
+  <div class=cdw-s><h3>${t('cdw_col')}</h3><div class=cdw-cols>
+   <div><label for=cdh1>${t('cdw_main')}</label><div class=cdw-chip><input type=color id=cdc1 value="${CD.c1}" aria-label="${t('cdw_main')}" oninput="cdCol(1,this.value)"><input id=cdh1 value="${CD.c1}" maxlength=7 aria-label="${t('cdw_main')} hex" oninput="cdHex(1,this.value)"></div></div>
+   <div><label for=cdh2>${t('cdw_sec')}</label><div class=cdw-chip><input type=color id=cdc2 value="${CD.c2||'#d2ab5a'}" aria-label="${t('cdw_sec')}" oninput="cdCol(2,this.value)"><input id=cdh2 value="${CD.c2}" maxlength=7 placeholder="${t('cd_none')}" aria-label="${t('cdw_sec')} hex" oninput="cdHex(2,this.value)"><button type=button class=cdw-x onclick="cdCol(2,'')" aria-label="${t('cd_none')}" title="${t('cd_none')}">×</button></div></div></div>
+   <p class=cdw-h>${t('cdw_colh')}</p></div>
+  <div class=cdw-s><h3>${t('cdw_lang')}</h3><div class=cdw-seg role=group>${['en','fr','both'].map(k=>`<button type=button data-l=${k} class="${CD.lang==k?'on':''}" aria-pressed="${CD.lang==k}" onclick="cdLang('${k}')">${t('cdw_'+k)}</button>`).join('')}</div></div>
+  <div class=cdw-s><h3>${t('cdw_show')}</h3>
+   <div class=cdw-tg><div><b>${t('cdw_fee')}</b><p class=cdw-h>${CD.has_fees?t('cdw_feeh'):t('cd_feen')}</p></div><button type=button role=switch id=cdfee class=cdw-sw aria-label="${t('cdw_fee')}" ${CD.has_fees?'':'disabled'} onclick="cdTog('fees')"></button></div>
+   <div class=cdw-tg><div><b>${t('cdw_hon')}</b><p class=cdw-h>${t('cdw_honh')}</p></div><button type=button role=switch id=cdhon class=cdw-sw aria-label="${t('cdw_hon')}" onclick="cdTog('hon')"></button></div></div>
+  <div id=cdres></div></div>
+  <div class=cdw-f><span id=cdst class=cdw-st></span><button type=button class=cdw-b onclick="cdReset()">${t('cdw_reset')}</button><button type=button class="cdw-b pri" onclick="cdSave()">${t('cd_save')}</button></div></div>
+ <div class="cdw-r"><div class=cdw-t><b>${t('cdw_prev')}</b><span class=cdw-live>${t('cdw_live')}</span><span class=sp></span><label for=cdn>${t('cdw_subj')}</label><select id=cdn onchange="CD.n=+this.value;cdPrev()">${[2,3,5,8,12,17,22].map(n=>`<option ${n==CD.n?'selected':''}>${n}</option>`).join('')}</select>
+  <span class=cdw-z><button type=button onclick="cdZoom(-25)" aria-label="${t('cdw_zout')}">−</button><span id=cdzv>${CD.z}%</span><button type=button onclick="cdZoom(25)" aria-label="${t('cdw_zin')}">+</button></span><button type=button class=cdw-tb onclick="cdNew()">${t('cdw_new')}</button><button type=button class=cdw-tb onclick="cdPrint()">${t('cdw_print')}</button></div>
+  <div class=cdw-stage><iframe id=cdfr title="${t('cdw_prev')}"></iframe><div class=cdw-ld id=cdld hidden>${t('cdw_load')}</div></div></div></section>`;
+ const old=$('#cdsec');if(old)old.outerHTML=h;else sec0.insertAdjacentHTML('afterend',h);cdBox();cdSync();await cdDes();cdPrev()}
+function cdSync(){const on=(id,v)=>{const e=$('#'+id);if(e){e.classList.toggle('on',!!v);e.setAttribute('aria-checked',!!v)}};on('cdfee',CD.fees&&CD.has_fees);on('cdhon',CD.hon);
+ const s=$('#cdst');if(s){s.textContent=CD.dirty?t('cdw_unsaved'):t('cdw_saved');s.classList.toggle('dirty',!!CD.dirty)}const sv=$('#stx_sv');if(CD.dirty&&sv&&typeof STX!='undefined')sv.textContent=''}
+function cdChg(){CD.dirty=1;cdSync();cdPrev(true)}
+function cdBox(){const b=$('#cdbox');if(!b)return;b.innerHTML=CD.logo?`<img src="${CD.logo}" alt="">`:`<span>${fi('cap',22)}</span>`;$('#cdrm').style.display=CD.logo?'':'none'}
+function cdLogo(v){CD.logo=v;cdBox();cdChg()}
+function cdCol(i,v){if(i==1){CD.c1=v;$('#cdc1').value=v;$('#cdh1').value=v}else{CD.c2=v;if(v)$('#cdc2').value=v;$('#cdh2').value=v}cdDes();cdChg()}
+function cdHex(i,v){if(/^#[0-9a-f]{6}$/i.test(v)){if(i==1){CD.c1=v;$('#cdc1').value=v}else{CD.c2=v;$('#cdc2').value=v}cdDes();cdChg()}else if(i==2&&!v){CD.c2='';cdDes();cdChg()}}
+function cdLang(k){CD.lang=k;document.querySelectorAll('.cdw-seg button').forEach(b=>{const on=b.dataset.l==k;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});cdChg()}
+function cdTog(k){if(k=='fees'){if(!CD.has_fees)return;CD.fees=!CD.fees}else{CD.hon=!CD.hon;if(typeof hrToggle=='function'&&$('#hr_b')){const c=$('#hr_on');if(c)c.checked=CD.hon;hrToggle(CD.hon)}}cdChg()}
+function cdZoom(d){CD.z=Math.max(50,Math.min(200,CD.z+d));$('#cdzv').textContent=CD.z+'%';cdShow()}
+// the preview is the real PDF the printer uses, drawn by the server from the settings on screen (saved or not)
+function cdBody(){return{c1:CD.c1,c2:CD.c2||'',lang:CD.lang,logo:CD.logo||null,fees:!!CD.fees,design:CD.design||'bars',honour:!!CD.hon,n:CD.n,term:1}}
+function cdPrev(soon){clearTimeout(CDT);CDT=setTimeout(cdFetch,soon?350:0)}
+async function cdFetch(){const q=++CDQ,ld=$('#cdld');if(ld)ld.hidden=false;
+ try{const r=await fetch('/api/report/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cdBody())});if(q!=CDQ)return;if(!r.ok)throw 0;const u=URL.createObjectURL(await r.blob());if(q!=CDQ){URL.revokeObjectURL(u);return}
+  if(CDU)URL.revokeObjectURL(CDU);CDU=u;cdShow()}catch{if(q==CDQ&&ld)ld.textContent=t('cdw_err')}
+ if(q==CDQ&&ld&&CDU)ld.hidden=true}
+function cdShow(){const f=$('#cdfr');if(!f||!CDU)return;const st=f.parentNode,fit=Math.max(30,Math.round((st.clientWidth-8)/793*100));f.src=CDU+`#toolbar=0&navpanes=0&scrollbar=1&zoom=${Math.round(fit*CD.z/100)}`}
+function cdNew(){if(CDU)window.open(CDU,'_blank','noopener')}
+function cdPrint(){const f=$('#cdfr');try{f.contentWindow.focus();f.contentWindow.print()}catch{cdNew()}}
+function cdPick(f){if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const m=400,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);
+  let u=c.toDataURL('image/png');if(u.length>190e3){x.globalCompositeOperation='destination-over';x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);u=c.toDataURL('image/jpeg',.85)}
+  if(u.length>190e3){$('#cdres').innerHTML=`<p class="box bad">${t('cd_big')}</p>`;return}cdLogo(u);$('#cdres').innerHTML=''};im.src=r.result};r.readAsDataURL(f);$('#cdfile').value=''}
+function cdReset(){vSettings()}
+// "Save design" also saves the school name, year and "under the name" lines if they were edited on the School tab
+async function cdSave(){const f=['sn2','hd','yr'].map(i=>($('#'+i)||{}).value||'');
+ if(CD0.n!==undefined&&$('#sn2')&&(f[0]!==CD0.n||f[1]!==CD0.h||f[2]!==CD0.y)){await ss();if(!/box ok/.test(($('#res')||{}).innerHTML||'')&&($('#stx_e')||{}).innerHTML){$('#cdres').innerHTML=$('#stx_e').innerHTML;return}CD0={n:f[0],h:f[1],y:f[2]}}
+ const r=await api('settings/card',{c1:CD.c1,c2:CD.c2,lang:CD.lang,logo:CD.logo||null,fees:!!CD.fees,design:CD.design||'bars'});
+ if(!r.ok){$('#cdres').innerHTML=`<p class="box bad">${em(r.s,r.d.error)}</p>`;return}
+ if(CD.hon!==CD.hon0&&typeof HON!='undefined'&&typeof hrSave=='function'){HON.on=CD.hon;await hrSave();const e=$('#hr_e');if(e&&e.className!='ok'&&e.textContent){$('#cdres').innerHTML=`<p class="box bad">${esc(e.textContent)}</p>`;return}}
+ CD.hon0=CD.hon;CD.dirty=0;$('#cdres').innerHTML='';cdSync()}
+{const o=vSettings;vSettings=async function(){await o();await cardDraw()}}
+{const o=ss;ss=async function(){await o();if(/box ok/.test(($('#res')||{}).innerHTML||'')||($('#cdsec')&&!($('#stx_e')||{}).innerHTML))cdPrev()}}
+addEventListener('resize',()=>{clearTimeout(cdShow.t);cdShow.t=setTimeout(cdShow,200)});
 async function cdDes(){const el=$('#cdd');if(!el)return;if(!CDS){const r=await api('card/designs');if(!r.ok)return;CDS=r.d.svg;CDS.__ids=r.d.ids}
  el.innerHTML=CDS.__ids.map(id=>`<button type=button class="cdt${CD.design==id?' on':''}" aria-pressed="${CD.design==id}" onclick="cdPick2('${id}')"><span class=cdpg>${cdSvg(id)}<i></i>${cdSvg(id,1)}</span><b>${t('cd_d_'+id)}</b></button>`).join('')}
-function cdPick2(id){CD.design=id;cdDes();cdPrev()}
-{const o=cardDraw;cardDraw=async function(){await o();const fg=$('#cdsec .fg');if(fg&&!$('#cdd')){fg.insertAdjacentHTML('beforebegin',`<div class=fw style="margin:4px 0 14px"><label>${t('cd_d')}</label><div class=cdd id=cdd></div><small>${t('cd_dh')}</small></div>`);
-  document.querySelectorAll('#cdc1,#cdh1,#cdc2,#cdh2').forEach(e=>e.addEventListener('input',cdDes));document.querySelector('#cdsec .fg button.sb')?.addEventListener('click',cdDes)}await cdDes();cdPrev()}}
-{const o=cdPrev;cdPrev=function(){const u=`/api/report/preview?n=${CD.n}&design=${CD.design||'bars'}&v=${Date.now()}`;$('#cdfr').src=u+'#toolbar=0&navpanes=0';$('#cdopen').href=u}}
-{const o=cdSave2;cdSave2=async function(note){const r=await api('settings/card',{c1:CD.c1,c2:CD.c2,lang:CD.lang,logo:CD.logo||null,fees:!!CD.fees,design:CD.design||'bars'});$('#cdres').innerHTML=r.ok?`<p class="box ok">${t('cd_ok')}</p>`:`<p class="box bad">${em(r.s,r.d.error)}</p>`;if(r.ok)cdPrev()}}
+function cdPick2(id){CD.design=id;cdDes();cdChg()}

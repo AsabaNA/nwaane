@@ -1,14 +1,14 @@
 // Settings page, redesigned: five tabs (School profile, Academic calendar, Card design, Honour roll, Support) inside one card.
 // Loaded after every file that adds a card to Settings, so it can regroup all of them.
-Object.assign(D.en,{stx_school:'School profile',stx_cal:'Academic calendar',stx_cards:'Card design',stx_honour:'Honour roll',stx_support:'Support',
- stx_sub:'Set up your school once. Everything else uses it.',stx_school_s:'How your school appears on report cards, receipts and letters.',stx_cal_s:'Year, terms and test sequences used for averages.',stx_cards_s:'How printed report cards look.',stx_honour_s:'Reward top students with a badge on their card.',stx_support_s:'Get help from the Meridian team.',
+Object.assign(D.en,{stx_school:'School profile',stx_cal:'Academic calendar',stx_cards:'Report cards',stx_honour:'Honour roll',stx_support:'Support',
+ stx_sub:'Set up your school once. Everything else uses it.',stx_school_s:'How your school appears on report cards, receipts and letters.',stx_cal_s:'Year, terms and test sequences used for averages.',stx_cards_s:'Design how printed report cards look. Changes appear on the right instantly.',stx_honour_s:'Reward top students with a badge on their card.',stx_support_s:'Get help from the Meridian team.',
  stx_more:'More school settings',stx_saved:'Saved [a]',stx_now:'just now',stx_ago:'[n] min ago',stx_discard:'Discard',stx_savech:'Save changes',stx_unsaved:'Unsaved changes',
  stx_year:'Current year',stx_yearh:'Switching the year starts fresh averages and ranks.',stx_ts:'Terms and sequences',stx_tsh:'Each term has its own number of sequences (tests).',stx_cur:'Now',stx_missing:'Set the [d] date of term [n].',stx_prog:'Year progress: week [w] of [t]',stx_hdr:'Header lines',
  stx_dsum:'Your report card',stx_dsumh:'The designer opens full screen with a live preview beside the settings.',stx_open:'Open card designer',stx_sample:'Print a sample',stx_close:'Close',stx_designer:'Card designer',stx_pat:'Pattern',stx_strips:'Strips',stx_col:'Colours',stx_lang:'Language',stx_fee:'Fees owing',stx_shown:'Shown',stx_hidden:'Hidden',
  stx_c_t:'Contact us',stx_c_mail:'Email us',stx_c_wa:'WhatsApp us',stx_c_call:'Call support',stx_c_help:'Help center',stx_c_helps:'Guides and short videos',stx_c_mails:'We reply by email',
  stx_m_t:'Send a message',stx_m_p:'Describe the problem. It opens in your email app, addressed to us.',stx_m_topic:'Topic',stx_m_reply:'Reply to',stx_m_msg:'Message',stx_m_ph:'Tell us what happened…',stx_m_send:'Send',stx_m_none:'The contact address has not been set up yet.',
  stx_tp:['Report cards','School fees','Teacher attendance','Timetable','Account or sign-in','Something else']});
-Object.assign(D.fr,{stx_school:'Profil de l’école',stx_cal:'Calendrier scolaire',stx_cards:'Modèle de bulletin',stx_honour:'Tableau d’honneur',stx_support:'Assistance',
+Object.assign(D.fr,{stx_school:'Profil de l’école',stx_cal:'Calendrier scolaire',stx_cards:'Bulletins',stx_honour:'Tableau d’honneur',stx_support:'Assistance',
  stx_sub:'Configurez votre école une fois. Tout le reste s’en sert.',stx_school_s:'Comment votre école apparaît sur les bulletins, reçus et courriers.',stx_cal_s:'Année, trimestres et séquences utilisés pour les moyennes.',stx_cards_s:'L’aspect des bulletins imprimés.',stx_honour_s:'Récompensez les meilleurs élèves avec un badge sur leur bulletin.',stx_support_s:'Obtenez de l’aide de l’équipe Meridian.',
  stx_more:'Autres réglages de l’école',stx_saved:'Enregistré [a]',stx_now:'à l’instant',stx_ago:'il y a [n] min',stx_discard:'Annuler',stx_savech:'Enregistrer',stx_unsaved:'Modifications non enregistrées',
  stx_year:'Année en cours',stx_yearh:'Changer d’année repart de zéro pour les moyennes et les rangs.',stx_ts:'Trimestres et séquences',stx_tsh:'Chaque trimestre a son propre nombre de séquences (évaluations).',stx_cur:'En cours',stx_missing:'Indiquez la date de [d] du trimestre [n].',stx_prog:'Avancement de l’année : semaine [w] sur [t]',stx_hdr:'Lignes d’en-tête',
@@ -36,14 +36,12 @@ function stxCalendar(s){const p=s.seq_plan.split(','),td=stxToday(),miss=stxMiss
 function stxBlk(sec){if(!sec||sec.dataset.stx)return sec;sec.dataset.stx=1;const kids=[...sec.children],l=document.createElement('div'),r=document.createElement('div');l.className='stx-l';r.className='stx-r';
  const h=kids.find(k=>k.tagName=='H2'||k.classList.contains('dp-h'));if(h)l.appendChild(h);const p=h&&kids.find(k=>k.tagName=='P'&&k!==h);if(p)l.appendChild(p);kids.forEach(k=>{if(k.parentNode===sec)r.appendChild(k)});sec.append(l,r);sec.classList.remove('dp');sec.classList.add('stx-blk');return sec}
 // ---- card design: summary + full-screen designer
-function stxCardSum(){const sw=c=>c?`<i class=stx-sw style="background:${esc(c)}"></i>`:'',l={en:t('cd_en'),fr:t('cd_fr'),both:t('cd_both')}[CD.lang]||'';
+function stxCardSum(){return'';const sw=c=>c?`<i class=stx-sw style="background:${esc(c)}"></i>`:'',l={en:t('cd_en'),fr:t('cd_fr'),both:t('cd_both')}[CD.lang]||'';
  return`<div class=stx-rc><div><h3>${t('stx_dsum')}</h3><p class=hint>${t('stx_dsumh')}</p><div class=stx-sum><span class=stx-pill>${t('stx_pat')} <b>${t('stx_strips')}</b></span><span class=stx-pill>${t('stx_col')} <b>${sw(CD.c1)}${sw(CD.c2)}</b></span><span class=stx-pill>${t('stx_lang')} <b>${esc(l)}</b></span><span class=stx-pill>${t('stx_fee')} <b>${CD.has_fees?t(CD.fees?'stx_shown':'stx_hidden'):'–'}</b></span></div>
  <button type=button class=pay-btn onclick="stxDesigner(1)">${t('stx_open')} →</button> <a class="sbl" id=stx_samp target=_blank rel=noopener>${t('stx_sample')}</a></div>
  <div class=stx-mini style="--c1:${esc(CD.c1)};--c2:${esc(CD.c2||CD.c1)}"><p class=g></p><p></p><p></p><p style="width:80%"></p><p></p><p style="width:60%"></p></div></div>`}
-function stxDesigner(on){const c=$('#cdsec');if(!c)return;if(on){if(!$('#stx_dh')){c.insertAdjacentHTML('afterbegin',`<div class=stx-dh id=stx_dh><b>${t('stx_designer')}</b><button type=button class=sb onclick="stxDesigner(0)">${fi('x',16)} ${t('stx_close')}</button></div>`)}c.classList.add('stx-full');document.body.classList.add('stx-lock');const f=$('#cdsec .sb');setTimeout(()=>{const b=$('#stx_dh button');b&&b.focus()},50);cdPrev()}
- else{c.classList.remove('stx-full');document.body.classList.remove('stx-lock');const h=$('#stx_cs');if(h)h.innerHTML=stxCardSum();stxSample()}}
+function stxDesigner(){}
 function stxSample(){const a=$('#stx_samp');if(a)a.href=`/api/report/preview?n=${CD.n}&v=${Date.now()}`}
-document.addEventListener('keydown',e=>{if(e.key=='Escape'&&document.body.classList.contains('stx-lock'))stxDesigner(0)});
 // ---- support tab
 function stxSupport(){const c=stxContact(),W=(window.STORE&&STORE.whatsapp)||'',P=(window.STORE&&STORE.phone)||'',E=encodeURIComponent,em2=(S&&S.email)||'';
  const card=(h,ic,b,sm)=>`<a class=stx-hc ${h}><span class=stx-e>${fi(ic,22)}</span><b>${b}</b><small>${sm}</small></a>`;
