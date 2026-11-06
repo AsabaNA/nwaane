@@ -9,7 +9,7 @@ const supportUser=tok=>{const x=db.prepare("SELECT x.*,s.support_until FROM supp
  const p=db.prepare("SELECT u.*,s.name school,s.code scode,s.trial_ends,s.paid_until FROM users u JOIN schools s ON s.id=u.school_id WHERE u.school_id=? AND u.role='principal' AND u.active=1 ORDER BY u.id LIMIT 1").get(x.school_id);
  return p?{...p,support:true,support_id:x.id,support_owner:x.owner_name,support_expires:x.expires,areas:x.areas}:null};
 const A2=require('./auth2');
-const userOf=tok=>{if(String(tok||'').startsWith('sp_'))return supportUser(tok);const u=db.prepare('SELECT u.*,s.name school,s.code scode,s.trial_ends,s.paid_until,s.demo sdemo,x.created sess FROM sessions x JOIN users u ON u.id=x.user_id JOIN schools s ON s.id=u.school_id WHERE x.token=? AND u.active=1').get(tok||'');
+const userOf=tok=>{if(String(tok||'').startsWith('sp_'))return supportUser(tok);const u=db.prepare('SELECT u.*,s.name school,s.code scode,s.trial_ends,s.paid_until,s.demo sdemo,x.created sess FROM sessions x JOIN users u ON u.id=x.user_id JOIN schools s ON s.id=u.school_id WHERE x.token=? AND u.active=1 AND COALESCE(u.can_login,1)=1').get(tok||'');
  if(u&&Date.now()-Date.parse(u.sess.replace(' ','T')+'Z')>LIFE(u.role)){db.prepare('DELETE FROM sessions WHERE token=?').run(tok);return null}
  if(u&&!u.email_ok&&!u.sdemo)return null;   // no verified email, no access
  return u};
@@ -57,13 +57,14 @@ app.post('/api/login',async(req,res)=>{const{code='',username='',password=''}=re
  if(u&&db.prepare('SELECT flag FROM schools WHERE id=?').get(u.school_id).flag=='cancelled')return E(res,403,'cancelled');
  if(!u)verify(password,DUMMY);   // same work whether or not the account exists
  if(!u||!verify(password,u.pw)){attempts[k]=(attempts[k]||0)+1;setTimeout(()=>delete attempts[k],6e5);return E(res,401,'login')}
+ if(u.can_login===0)return E(res,403,'blocked');
  if(require('./pwhash').legacy(u.pw))db.prepare('UPDATE users SET pw=? WHERE id=?').run(hash(password),u.id);
  const demo=db.prepare('SELECT demo FROM schools WHERE id=?').get(u.school_id).demo;   // the demo school skips email checks
  if(demo||(u.email_ok&&A2.trusted(req,{id:u.id}))){session(res,u,u.role);audit(u,'login');return res.json({ok:1})}
  if(!u.email){const tk=A2.make({user_id:u.id,kind:'email'});return res.json({step:'email',ticket:tk})}
  const tk=A2.make({user_id:u.id,kind:'login'}),s=await A2.sendCode(A2.get(tk),u.email,lang,u.email_ok?'login':'verify');
  res.json({step:'code',ticket:tk,hint:A2.hint(u.email),sent:s=='ok'})});
-A2.routes(app,{session,audit});
+A2.routes(app,{session,audit,auth});
 app.get('/api/me',auth([],true),(req,res)=>{const u=req.user;PL.sweep(u.school_id);const sc=school(req),ck=SC.clock(sc);res.json({uid:u.id,gate:isGate(u),demo:!!sc.demo,now:ck,can_gate:!!u.can_gate,heads:db.prepare('SELECT COUNT(*) n FROM classes WHERE head_id=?').get(u.id).n,seqs:R.seqs(school(req)),year:school(req).year,name:u.name,role:u.role,roll:school(req).roll_mode||'off',honour:!!school(req).hr_on,sections:SECT.ensure(req.user.school_id).length,school:u.school,code:u.scode,demo_ro:String(req.cookies.t||'').startsWith('dm_'),support:u.support?{owner:u.support_owner,expires:u.support_expires}:null,modules:(school(req).modules||'reports,fees,tracking').split(','),ai:require('./ai').flag(u),bill:B.status(u.school_id),readonly:!!B.gate(u.school_id),active:true})});
 app.post('/api/logout',auth([],true),(req,res)=>{if(req.user.support){db.prepare('UPDATE support_sessions SET ended=? WHERE id=?').run(now(),req.user.support_id);res.clearCookie('t');return res.json({ok:1})}
  db.prepare('DELETE FROM sessions WHERE token=?').run(req.cookies.t);res.clearCookie('t');res.json({ok:1})});
@@ -91,7 +92,7 @@ app.post('/api/classes/update',auth(['principal']),(req,res)=>{const sid=req.use
 app.get('/api/brand',auth(),(req,res)=>{const sc=school(req);res.json({lines:require('./head')(sc),logo:sc.card_logo||''})});
 // --- staff (principal manages)
 app.get('/api/users',auth(['principal']),(req,res)=>{const sid=req.user.school_id,subs=db.prepare('SELECT s.teacher_id main,s.id,s.name subject,c.id cid,c.name cls,c.short FROM subjects s JOIN classes c ON c.id=s.class_id WHERE s.school_id=?').all(sid),seq=db.prepare('SELECT q.subject_id,q.teacher_id FROM subject_seq q JOIN subjects s ON s.id=q.subject_id WHERE s.school_id=?').all(sid),heads=db.prepare('SELECT id,name,short,head_id FROM classes WHERE school_id=? AND head_id IS NOT NULL').all(sid);
- res.json(db.prepare('SELECT id,username,name,role,active,can_gate,email,email_ok FROM users WHERE school_id=? AND active=1 ORDER BY id').all(sid).map(u=>{const m={};for(const x of subs)if(x.main==u.id||seq.some(q=>q.subject_id==x.id&&q.teacher_id==u.id))(m[x.cid]??={cid:x.cid,cls:x.cls,short:x.short,subjects:[],head:false}).subjects.push(x.subject);for(const h of heads)if(h.head_id==u.id)(m[h.id]??={cid:h.id,cls:h.name,short:h.short,subjects:[],head:false}).head=true;
+ res.json(db.prepare('SELECT id,username,name,role,active,can_gate,can_login,pw_at,email,email_ok FROM users WHERE school_id=? AND active=1 ORDER BY id').all(sid).map(u=>{const m={};for(const x of subs)if(x.main==u.id||seq.some(q=>q.subject_id==x.id&&q.teacher_id==u.id))(m[x.cid]??={cid:x.cid,cls:x.cls,short:x.short,subjects:[],head:false}).subjects.push(x.subject);for(const h of heads)if(h.head_id==u.id)(m[h.id]??={cid:h.id,cls:h.name,short:h.short,subjects:[],head:false}).head=true;
   return{...u,has_photo:!!db.prepare('SELECT 1 FROM staff_photos WHERE user_id=?').get(u.id),sections:u.role=='teacher'?SECT.ofUser(sid,u.id):[],classes:Object.values(m).sort((a,b)=>a.cls.localeCompare(b.cls))}}))});
 app.post('/api/users',auth(['principal']),(req,res)=>{const{username='',name='',role='',password=''}=req.body,email=String(req.body.email||'').trim().toLowerCase();
  if(!username.trim()||!name.trim())return E(res,400,'required');if(!A2.okEmail(email))return E(res,400,'email');if(db.prepare("SELECT 1 FROM users WHERE school_id=? AND active=1 AND lower(email)=?").get(req.user.school_id,email))return E(res,409,'email_used');if(!['secretary','teacher','surveillant'].includes(role))return E(res,400,'invalid');if(!strong(password))return E(res,400,'pw');
@@ -160,7 +161,7 @@ app.post('/api/subjects/team',auth(['principal']),(req,res)=>{const{subject_id,t
  else return E(res,400,'invalid');
  res.json({ok:1,clashes})});
 app.post('/api/subjects/team/remove',auth(['principal']),(req,res)=>{const{subject_id,teacher_id}=req.body,sid=req.user.school_id,sub=db.prepare('SELECT * FROM subjects WHERE id=? AND school_id=?').get(subject_id,sid);if(!sub)return E(res,400,'invalid');
- tx(()=>{db.prepare('DELETE FROM subject_seq WHERE subject_id=? AND teacher_id=?').run(sub.id,teacher_id);if(sub.teacher_id==teacher_id){db.prepare('UPDATE subjects SET teacher_id=NULL WHERE id=?').run(sub.id);SC.reassign(sid,sub.id,null,SC.clock(school(req)).date)}})();
+ tx(()=>{db.prepare('DELETE FROM subject_seq WHERE subject_id=? AND teacher_id=?').run(sub.id,teacher_id);if(sub.teacher_id==teacher_id)db.prepare('UPDATE subjects SET teacher_id=NULL WHERE id=?').run(sub.id)})();if(sub.teacher_id==teacher_id)SC.reassign(sid,sub.id,null,SC.clock(school(req)).date);
  audit(req.user,'subject.team.remove',sub.id+':'+teacher_id);res.json({ok:1})});
 // small profile card for a teacher: contact, what they teach, presence this month
 app.get('/api/teacher/card',auth(['principal','surveillant']),(req,res)=>{const sid=req.user.school_id,u=db.prepare("SELECT id,name,username,phone,active,can_gate FROM users WHERE id=? AND school_id=? AND role='teacher'").get(+req.query.teacher_id||0,sid);if(!u)return E(res,404,'invalid');
@@ -286,8 +287,22 @@ app.post('/api/users/update',auth(['principal']),(req,res)=>{const{id,name='',ro
  if(!u||!name.trim()||!['secretary','teacher','surveillant'].includes(role))return E(res,400,'invalid');if(password&&!strong(password))return E(res,400,'pw');
  const email=String(req.body.email??u.email).trim().toLowerCase();if(!A2.okEmail(email))return E(res,400,'email');if(email!=u.email&&db.prepare("SELECT 1 FROM users WHERE school_id=? AND active=1 AND id!=? AND lower(email)=?").get(req.user.school_id,u.id,email))return E(res,409,'email_used');
  if(role=='teacher'&&Array.isArray(req.body.sections)&&SECT.ensure(req.user.school_id).length>1&&!req.body.sections.some(i=>SECT.valid(req.user.school_id,i)))return E(res,400,'sec_teacher');
- tx(()=>{if(role=='teacher'&&Array.isArray(req.body.sections))SECT.setUser(req.user.school_id,u.id,req.body.sections);if(email!=u.email){db.prepare('UPDATE users SET email=?,email_ok=0 WHERE id=?').run(email,u.id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);A2.forget(u.id)}db.prepare('UPDATE users SET name=?,role=?,can_gate=? WHERE id=?').run(name.trim(),role,req.body.can_gate?1:0,u.id);if(password){db.prepare('UPDATE users SET pw=? WHERE id=?').run(hash(password),u.id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id)}
+ tx(()=>{if(role=='teacher'&&Array.isArray(req.body.sections))SECT.setUser(req.user.school_id,u.id,req.body.sections);if(email!=u.email){db.prepare('UPDATE users SET email=?,email_ok=0 WHERE id=?').run(email,u.id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);A2.forget(u.id)}db.prepare('UPDATE users SET name=?,role=?,can_gate=? WHERE id=?').run(name.trim(),role,req.body.can_gate?1:0,u.id);if(password){db.prepare("UPDATE users SET pw=?,pw_at=datetime('now') WHERE id=?").run(hash(password),u.id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id)}
   if(role!=u.role&&u.role=='teacher')unassign(u.id)})();audit(req.user,'user.edit',u.username);res.json({ok:1})});
+
+// staff window: switches that save at once, and the teaching tab (subjects and classes of one teacher)
+app.post('/api/users/flags',auth(['principal']),(req,res)=>{const u=staffRow(req,req.body.id);if(!u)return E(res,400,'invalid');
+ if('can_gate' in req.body)db.prepare('UPDATE users SET can_gate=? WHERE id=?').run(req.body.can_gate?1:0,u.id);
+ if('can_login' in req.body){const on=req.body.can_login?1:0;db.prepare('UPDATE users SET can_login=? WHERE id=?').run(on,u.id);if(!on)db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);audit(req.user,on?'user.unblock':'user.block',u.username)}
+ res.json({ok:1})});
+app.get('/api/users/teaching',auth(['principal']),(req,res)=>{const sid=req.user.school_id,u=staffRow(req,req.query.id);if(!u||u.role!='teacher')return E(res,400,'invalid');
+ const rows=db.prepare('SELECT s.id,s.name subject,s.teacher_id,c.id cid,c.name cls,c.short,(SELECT name FROM users x WHERE x.id=s.teacher_id) tname,EXISTS(SELECT 1 FROM subject_seq q WHERE q.subject_id=s.id AND q.teacher_id=?) seq FROM subjects s JOIN classes c ON c.id=s.class_id WHERE s.school_id=? ORDER BY c.name,s.name').all(u.id,sid);
+ res.json({rows:rows.map(r=>({id:r.id,subject:r.subject,cid:r.cid,cls:r.cls,short:r.short,mine:r.teacher_id==u.id||!!r.seq,other:r.teacher_id&&r.teacher_id!=u.id?r.tname:''}))})});
+app.post('/api/users/teaching',auth(['principal']),(req,res)=>{const sid=req.user.school_id,u=staffRow(req,req.body.id);if(!u||u.role!='teacher')return E(res,400,'invalid');
+ const sub=db.prepare('SELECT * FROM subjects WHERE id=? AND school_id=?').get(+req.body.subject_id||0,sid);if(!sub)return E(res,400,'invalid');let clashes=[];
+ if(req.body.on){db.prepare('UPDATE subjects SET teacher_id=? WHERE id=?').run(u.id,sub.id);clashes=SC.reassign(sid,sub.id,u.id,SC.clock(school(req)).date);audit(req.user,'subject.teacher',sub.id+'->'+u.id)}
+ else{tx(()=>{db.prepare('DELETE FROM subject_seq WHERE subject_id=? AND teacher_id=?').run(sub.id,u.id);if(sub.teacher_id==u.id)db.prepare('UPDATE subjects SET teacher_id=NULL WHERE id=?').run(sub.id)})();if(sub.teacher_id==u.id)clashes=SC.reassign(sid,sub.id,null,SC.clock(school(req)).date);audit(req.user,'subject.team.remove',sub.id+':'+u.id)}
+ res.json({ok:1,clashes:clashes||[]})});
 app.post('/api/users/delete',auth(['principal']),(req,res)=>{const u=staffRow(req,req.body.id);if(!u)return E(res,400,'invalid');
  tx(()=>{db.prepare("UPDATE users SET active=0,username=username||'#del'||id WHERE id=?").run(u.id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);unassign(u.id)})();audit(req.user,'user.delete',u.username);res.json({ok:1})});
 const basisOf=(req,def)=>{const b=String(req.query.basis||'');return b&&R.okBasis(req.user.school_id,b)?b:def()};
@@ -324,7 +339,7 @@ app.get('/reset',(req,res)=>res.sendFile(require('path').join(__dirname,'public'
 const rl={};
 app.post('/api/reset',(req,res)=>{if((rl[req.ip]=(rl[req.ip]||0)+1)>10)return E(res,429,'many');setTimeout(()=>rl[req.ip]--,6e5);const{token='',password=''}=req.body;if(!strong(password))return E(res,400,'pw');
  const h=crypto.createHash('sha256').update(String(token)).digest('hex'),r=db.prepare('SELECT * FROM reset_tokens WHERE hash=? AND used=0').get(h);if(!r||r.expires<now())return E(res,410,'expired');
- tx(()=>{db.prepare('UPDATE users SET pw=? WHERE id=?').run(hash(password),r.user_id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(r.user_id);db.prepare('UPDATE reset_tokens SET used=1 WHERE hash=?').run(h)})();
+ tx(()=>{db.prepare("UPDATE users SET pw=?,pw_at=datetime('now') WHERE id=?").run(hash(password),r.user_id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(r.user_id);db.prepare('UPDATE reset_tokens SET used=1 WHERE hash=?').run(h)})();
  const u=db.prepare('SELECT * FROM users WHERE id=?').get(r.user_id);audit(u,'password.reset');res.json({ok:1,code:db.prepare('SELECT code FROM schools WHERE id=?').get(u.school_id).code,username:u.username})});
 app.get('/api/announcements',auth([],true),(req,res)=>{const d=now().slice(0,10);res.json(db.prepare('SELECT id,title_en,body_en,title_fr,body_fr,level FROM announcements WHERE active=1 AND starts<=? AND ends>=? ORDER BY id DESC').all(d,d))});
 require('./core/jobs').every('backup-tick',36e5,BK.tick,5000);

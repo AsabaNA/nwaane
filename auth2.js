@@ -31,7 +31,7 @@ function trust(res,who){const t=crypto.randomBytes(24).toString('hex'),[c,id]=de
  res.cookie(who.owner?'od':'d',t,SEC.cookieOpts(res,{httpOnly:true,sameSite:'lax',path:who.owner?'/owners':'/',maxAge:REMEMBER}))}
 const forget=uid=>{db.prepare('DELETE FROM trusted_devices WHERE user_id=?').run(uid)};
 // --- routes
-function routes(app,{session,audit}){
+function routes(app,{session,audit,auth}){
  const lg=b=>b&&b.lang=='fr'?'fr':'en';
  const emailTaken=(sid,e,uid)=>!!db.prepare("SELECT 1 FROM users WHERE school_id=? AND active=1 AND id!=? AND lower(email)=?").get(sid,uid||0,e);
  // supply or change the email on a half-finished sign-in (first sign-in of an old account, or a typo at sign-up)
@@ -52,6 +52,12 @@ function routes(app,{session,audit}){
   if(r.pending){if(emailTaken(u.school_id,r.pending,u.id))return E(res,409,'email_used');db.prepare('UPDATE users SET email=? WHERE id=?').run(r.pending,u.id)}
   db.prepare('UPDATE users SET email_ok=1 WHERE id=?').run(u.id);
   trust(res,{id:u.id});session(res,u,u.role);audit(u,r.kind=='signup'?'school.create':'login.2fa');res.json({ok:1,code:u.scode,kind:r.kind})});
+
+ // principal sends a staff member a one-hour link to choose their own password (verified email only)
+ app.post("/api/users/reset-link",auth(["principal"]),async(req,res)=>{const u=db.prepare("SELECT * FROM users WHERE id=? AND school_id=? AND active=1 AND role!='principal'").get(+req.body.id||0,req.user.school_id);
+  if(!u)return E(res,400,'invalid');if(!u.email||!u.email_ok)return E(res,409,'no_email');if(SEC.hit('rlk'+u.id,3,36e5))return E(res,429,'many');
+  const tok=crypto.randomBytes(24).toString('hex');db.prepare('DELETE FROM reset_tokens WHERE user_id=?').run(u.id);db.prepare('INSERT INTO reset_tokens(hash,user_id,expires) VALUES(?,?,?)').run(H(tok),u.id,new Date(Date.now()+36e5).toISOString());
+  const base=process.env.BASE_URL||`${req.protocol}://${req.get('host')}`,m=M.msg(lg(req.body),'reset',u.name,`${base}/reset?token=${tok}`);await M.send({to:u.email,subject:m.subject,text:m.text});audit(req.user,'user.reset_link',u.username);res.json({ok:1})});
  // forgot password: the link goes to the verified email only; the answer never says whether the account exists
  app.post('/api/forgot',async(req,res)=>{if(SEC.hit('fg'+req.ip,10,36e5))return E(res,429,'many');
   const{code='',username=''}=req.body,u=db.prepare('SELECT u.* FROM users u JOIN schools s ON s.id=u.school_id WHERE s.code=? AND u.username=? AND u.active=1').get(String(code).trim().toUpperCase(),String(username).trim());

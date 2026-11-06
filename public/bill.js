@@ -52,3 +52,5 @@ async function vBill(){const r=await api('billing');if(!r.ok)return $('#m').inne
  <aside class=sg><section class=dp><h2>${t('bl_how')}</h2><p>${t('bl_howt')}</p><p class=hint>${t('bl_grace')}</p></section>
  <section class=dp><h2>${t('bl_cal')}</h2><p>${t('bl_calt')}</p>${d.terms.map(x=>`<p class=trow><b>T${x.term}</b> ${bd(x.start)} → ${bd(x.end)}</p>`).join('')}<div class=fa><button type=button class=sb onclick="dgo('settings')">${t('bl_cal_go')}</button></div></section></aside></div>`}
 const fmtTerm=x=>`${t('term')} ${x.term} · ${x.year}/${x.year+1}`;
+Object.assign(D.en,{e_blocked:'This account has been blocked by your school. Ask the principal.',e_no_email:'This person has no verified email address yet.'});
+Object.assign(D.fr,{e_blocked:'Ce compte a été bloqué par votre école. Demandez au directeur.',e_no_email:'Cette personne n’a pas encore d’adresse e-mail vérifiée.'});

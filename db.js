@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS cards(code TEXT PRIMARY KEY,school_id INTEGER NOT NUL
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY,at TEXT DEFAULT CURRENT_TIMESTAMP,school_id INTEGER,user_id INTEGER,action TEXT,detail TEXT);
 `);
 db.exec(`CREATE INDEX IF NOT EXISTS i_marks_subject ON marks(subject_id,seq);CREATE INDEX IF NOT EXISTS i_students_class ON students(school_id,class_id);CREATE INDEX IF NOT EXISTS i_subjects_class ON subjects(class_id);CREATE INDEX IF NOT EXISTS i_cards_class ON cards(class_id,term)`);
+for(const c of['can_login INTEGER DEFAULT 1','pw_at TEXT'])try{db.exec(`ALTER TABLE users ADD COLUMN ${c}`)}catch{}
 try{db.exec('ALTER TABLE classes ADD COLUMN head_id INTEGER')}catch{}
 try{db.exec("ALTER TABLE classes ADD COLUMN off_days TEXT DEFAULT ''")}catch{}
 // A "marks sheet" is one subject in one sequence. It counts as submitted when the teacher clicked "Submit marks to the school", even if some
